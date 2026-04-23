@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "662514684473",
+    "project_id": "bundadini-e5f11",
+    "storage_bucket": "bundadini-e5f11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:662514684473:android:b598ab91bffed03c79b3e8",
+        "android_client_info": {
+          "package_name": "com.example.bundadini"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD1FX92zYg7rASOcCjH_aMCDTgUy9iAfc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
