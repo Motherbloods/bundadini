@@ -57,7 +57,7 @@ class PdfService {
             fontBold),
         pw.SizedBox(height: 16),
 
-        // TABEL PEMERIKSAAN─
+        // TABEL PEMERIKSAAN
         _buildSection('HASIL PEMERIKSAAN', fontBold),
         pw.SizedBox(height: 8),
         _buildParamTable(exam, font, fontBold),
@@ -69,13 +69,13 @@ class PdfService {
         _buildKesimpulan(exam, font, fontBold),
         pw.SizedBox(height: 16),
 
-        // REKOMENDASI─
+        // REKOMENDASI
         _buildSection('REKOMENDASI', fontBold),
         pw.SizedBox(height: 8),
         _buildRekomendasi(exam, font),
         pw.SizedBox(height: 32),
 
-        // FOOTER / TANDA TANGAN─
+        // FOOTER / TANDA TANGAN
         _buildFooter(exam.kaderNama, bidanNama, exam.tanggal, font, fontBold),
       ],
     ));
@@ -182,15 +182,15 @@ class PdfService {
       data: rows,
       headerStyle:
           pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.white),
-      headerDecoration: pw.BoxDecoration(color: _red),
+      headerDecoration: const pw.BoxDecoration(color: _red),
       cellStyle: pw.TextStyle(font: font, fontSize: 10),
       cellAlignments: {
         0: pw.Alignment.centerLeft,
         1: pw.Alignment.center,
         2: pw.Alignment.center
       },
-      rowDecoration: pw.BoxDecoration(color: _lightGrey),
-      oddRowDecoration: pw.BoxDecoration(color: PdfColors.white),
+      rowDecoration: const pw.BoxDecoration(color: _lightGrey),
+      oddRowDecoration: const pw.BoxDecoration(color: PdfColors.white),
       border: pw.TableBorder.all(color: _divider, width: 0.5),
       columnWidths: {
         0: const pw.FlexColumnWidth(3),
@@ -200,7 +200,7 @@ class PdfService {
     );
   }
 
-  // Kesimpulan─
+  // Kesimpulan
   static pw.Widget _buildKesimpulan(
       ExaminationModel exam, pw.Font font, pw.Font fontBold) {
     final ibuColor = exam.statusIbu == ExaminationStatus.risikoTinggi
@@ -273,7 +273,7 @@ class PdfService {
     );
   }
 
-  // Footer─
+  // Footer
   static pw.Widget _buildFooter(String kaderNama, String bidanNama,
       DateTime tanggal, pw.Font font, pw.Font fontBold) {
     return pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
