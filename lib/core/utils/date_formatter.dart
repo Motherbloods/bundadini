@@ -1,0 +1,44 @@
+import 'package:intl/intl.dart';
+
+class DateFormatter {
+  DateFormatter._();
+
+  static String toDisplay(DateTime date) =>
+      DateFormat('dd MMM yyyy', 'id_ID').format(date);
+
+  static String toDisplayWithDay(DateTime date) =>
+      DateFormat('EEEE, dd MMM yyyy', 'id_ID').format(date);
+
+  static String toShort(DateTime date) => DateFormat('dd/MM/yyyy').format(date);
+
+  static String toMonthYear(DateTime date) =>
+      DateFormat('MMM yyyy', 'id_ID').format(date);
+
+  static String toIso(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
+
+  static String toFileStamp(DateTime date) =>
+      DateFormat('yyyyMMdd').format(date);
+
+  static String toTimeStamp(DateTime date) =>
+      DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(date);
+
+  static String ageFromDate(DateTime birthDate) {
+    final now = DateTime.now();
+    int years = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      years--;
+    }
+    return '$years tahun';
+  }
+
+  /// Hitung taksiran persalinan dari HPHT (Naegele's rule)
+  static DateTime taksiran(DateTime hpht) =>
+      hpht.add(const Duration(days: 280));
+
+  /// Hitung usia kehamilan dalam minggu dari HPHT
+  static int usiaKehamilanMinggu(DateTime hpht) {
+    final diff = DateTime.now().difference(hpht).inDays;
+    return (diff / 7).floor();
+  }
+}
