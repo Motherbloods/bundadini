@@ -5,13 +5,13 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_formatter.dart';
-// import '../../../data/models/examination_model.dart';
+import '../../../data/models/examination_model.dart';
 import '../../../data/models/patient_model.dart';
-// import '../../../domain/providers/examination_provider.dart';
+import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
-// import '../../_widgets/empty_state.dart';
+import '../../_widgets/empty_state.dart';
 import '../../_widgets/section_header.dart';
-// import '../../_widgets/status_badge.dart';
+import '../../_widgets/status_badge.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   final String patientId;
@@ -33,7 +33,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
 
   void _load() {
     context.read<PatientProvider>().loadPatient(widget.patientId);
-    // context.read<ExaminationProvider>().loadHistory(widget.patientId);
+    context.read<ExaminationProvider>().loadHistory(widget.patientId);
   }
 
   @override
@@ -45,7 +45,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
   @override
   Widget build(BuildContext context) {
     final patProv = context.watch<PatientProvider>();
-    // final examProv = context.watch<ExaminationProvider>();
+    final examProv = context.watch<ExaminationProvider>();
     final patient = patProv.selectedPatient;
 
     if (patProv.isLoading || patient == null) {
@@ -80,7 +80,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
         controller: _tab,
         children: [
           _BiodataTab(patient: patient),
-          // _RiwayatTab(patientId: patient.id, examProv: examProv),
+          _RiwayatTab(patientId: patient.id, examProv: examProv),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -220,91 +220,91 @@ class _InfoItem {
 }
 
 // Tab Riwayat
-// class _RiwayatTab extends StatelessWidget {
-//   final String patientId;
-//   final ExaminationProvider examProv;
-//   const _RiwayatTab({required this.patientId, required this.examProv});
+class _RiwayatTab extends StatelessWidget {
+  final String patientId;
+  final ExaminationProvider examProv;
+  const _RiwayatTab({required this.patientId, required this.examProv});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     if (examProv.isLoading) {
-//       return const Center(
-//           child: CircularProgressIndicator(color: AppColors.primary));
-//     }
-//     if (examProv.history.isEmpty) {
-//       return const EmptyState(
-//         icon: Icons.assignment_outlined,
-//         title: 'Belum ada riwayat pemeriksaan',
-//         subtitle: 'Ketuk "Periksa Sekarang" untuk mulai',
-//       );
-//     }
-//     return ListView.builder(
-//       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-//       itemCount: examProv.history.length,
-//       itemBuilder: (ctx, i) => _ExamCard(exam: examProv.history[i]),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    if (examProv.isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary));
+    }
+    if (examProv.history.isEmpty) {
+      return const EmptyState(
+        icon: Icons.assignment_outlined,
+        title: 'Belum ada riwayat pemeriksaan',
+        subtitle: 'Ketuk "Periksa Sekarang" untuk mulai',
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      itemCount: examProv.history.length,
+      itemBuilder: (ctx, i) => _ExamCard(exam: examProv.history[i]),
+    );
+  }
+}
 
-// class _ExamCard extends StatelessWidget {
-//   final ExaminationModel exam;
-//   const _ExamCard({required this.exam});
+class _ExamCard extends StatelessWidget {
+  final ExaminationModel exam;
+  const _ExamCard({required this.exam});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       margin: const EdgeInsets.only(bottom: 10),
-//       child: InkWell(
-//         borderRadius: BorderRadius.circular(16),
-//         onTap: () => context.push('/kader/examine/result', extra: exam.id),
-//         child: Padding(
-//           padding: const EdgeInsets.all(14),
-//           child:
-//               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-//             Row(children: [
-//               const Icon(Icons.calendar_today_rounded,
-//                   size: 16, color: AppColors.textSecond),
-//               const SizedBox(width: 6),
-//               Text(DateFormatter.toDisplay(exam.tanggal),
-//                   style: const TextStyle(
-//                       fontWeight: FontWeight.w600, fontSize: 15)),
-//               const Spacer(),
-//               Text('${exam.usiaKehamilan} ${AppStrings.minggu}',
-//                   style: const TextStyle(
-//                       color: AppColors.textSecond, fontSize: 14)),
-//             ]),
-//             const SizedBox(height: 6),
-//             Text('Kader: ${exam.kaderNama}',
-//                 style:
-//                     const TextStyle(color: AppColors.textSecond, fontSize: 13)),
-//             const SizedBox(height: 10),
-//             Row(children: [
-//               Expanded(
-//                   child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                     const Text('Kondisi Ibu',
-//                         style: TextStyle(
-//                             fontSize: 12, color: AppColors.textSecond)),
-//                     const SizedBox(height: 4),
-//                     StatusBadge(status: exam.statusIbu),
-//                   ])),
-//               Expanded(
-//                   child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                     const Text('Kondisi Janin',
-//                         style: TextStyle(
-//                             fontSize: 12, color: AppColors.textSecond)),
-//                     const SizedBox(height: 4),
-//                     StatusBadge(status: exam.statusJanin, isJanin: true),
-//                   ])),
-//               const Icon(Icons.chevron_right_rounded,
-//                   color: AppColors.textSecond),
-//             ]),
-//           ]),
-//         ),
-//       ),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => context.push('/kader/examine/result', extra: exam.id),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.calendar_today_rounded,
+                  size: 16, color: AppColors.textSecond),
+              const SizedBox(width: 6),
+              Text(DateFormatter.toDisplay(exam.tanggal),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 15)),
+              const Spacer(),
+              Text('${exam.usiaKehamilan} ${AppStrings.minggu}',
+                  style: const TextStyle(
+                      color: AppColors.textSecond, fontSize: 14)),
+            ]),
+            const SizedBox(height: 6),
+            Text('Kader: ${exam.kaderNama}',
+                style:
+                    const TextStyle(color: AppColors.textSecond, fontSize: 13)),
+            const SizedBox(height: 10),
+            Row(children: [
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    const Text('Kondisi Ibu',
+                        style: TextStyle(
+                            fontSize: 12, color: AppColors.textSecond)),
+                    const SizedBox(height: 4),
+                    StatusBadge(status: exam.statusIbu),
+                  ])),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    const Text('Kondisi Janin',
+                        style: TextStyle(
+                            fontSize: 12, color: AppColors.textSecond)),
+                    const SizedBox(height: 4),
+                    StatusBadge(status: exam.statusJanin, isJanin: true),
+                  ])),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textSecond),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+}
