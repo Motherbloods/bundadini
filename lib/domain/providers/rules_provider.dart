@@ -1,25 +1,27 @@
-// lib/domain/providers/rules_provider.dart
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../../data/models/rule_model.dart';
+import '../../data/repositories/rule_repository.dart';
 
 class RulesProvider extends ChangeNotifier {
-  final List<String> _rules = [];
+  final RuleRepository _repo = RuleRepository();
 
-  List<String> get rules => _rules;
+  List<RuleModel> _rules = [];
+  bool _isLoaded = false;
 
-  void addRule(String rule) {
-    _rules.add(rule);
-    notifyListeners();
+  List<RuleModel> get rules => _rules;
+  bool get isLoaded => _isLoaded;
+
+  RulesProvider() {
+    fetchRules();
   }
 
-  void removeRule(int index) {
-    if (index >= 0 && index < _rules.length) {
-      _rules.removeAt(index);
+  Future<void> fetchRules() async {
+    try {
+      _rules = await _repo.fetchActiveRules();
+      _isLoaded = true;
       notifyListeners();
+    } catch (e) {
+      debugPrint('RulesProvider error: $e');
     }
-  }
-
-  void clearRules() {
-    _rules.clear();
-    notifyListeners();
   }
 }
