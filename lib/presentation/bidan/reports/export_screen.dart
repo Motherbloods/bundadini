@@ -56,11 +56,12 @@ class _ExportScreenState extends State<ExportScreen> {
     } catch (e) {
       if (mounted) _showError('Gagal ekspor Excel: $e');
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _statusMsg = null;
         });
+      }
     }
   }
 
@@ -345,7 +346,7 @@ class _ExportOptionCard extends StatelessWidget {
       Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 26)),
       const SizedBox(width: 14),
