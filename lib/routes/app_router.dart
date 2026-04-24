@@ -1,5 +1,5 @@
-// lib/routes/app_router.dart
-
+import 'package:bundadini/presentation/auth/login_screen.dart';
+import 'package:bundadini/presentation/auth/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,12 +14,12 @@ class AppRouter {
           initialLocation: AppRoutes.splash,
           routes: [
             GoRoute(
-              path: '/',
-              builder: (context, state) => const Scaffold(
-                body: Center(
-                  child: Text('Bunda Dini App'),
-                ),
-              ),
+              path: AppRoutes.splash,
+              builder: (_, __) => const SplashScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.login,
+              builder: (_, __) => const LoginScreen(),
             ),
           ]);
 }
