@@ -227,7 +227,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
                   const SizedBox(width: 12),
                 ],
                 Expanded(
-                  flex: 2,
                   child: CustomButton(
                     label: _step == 3 ? AppStrings.simpanPemeriksaan : 'Lanjut',
                     onPressed: isLoading ? null : _next,
@@ -303,39 +302,43 @@ class _StepIndicator extends StatelessWidget {
           final idx = i ~/ 2;
           final done = idx < currentIndex;
           final active = idx == currentIndex;
-          return Column(mainAxisSize: MainAxisSize.min, children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: done
-                    ? AppColors.success
-                    : (active ? AppColors.primary : AppColors.background),
-                border: Border.all(
-                    color: done
-                        ? AppColors.success
-                        : (active ? AppColors.primary : AppColors.divider),
-                    width: 2),
+          return Expanded(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: done
+                      ? AppColors.success
+                      : (active ? AppColors.primary : AppColors.background),
+                  border: Border.all(
+                      color: done
+                          ? AppColors.success
+                          : (active ? AppColors.primary : AppColors.divider),
+                      width: 2),
+                ),
+                child: Center(
+                  child: done
+                      ? const Icon(Icons.check, color: Colors.white, size: 16)
+                      : Text('${idx + 1}',
+                          style: TextStyle(
+                              color:
+                                  active ? Colors.white : AppColors.textSecond,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14)),
+                ),
               ),
-              child: Center(
-                child: done
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
-                    : Text('${idx + 1}',
-                        style: TextStyle(
-                            color: active ? Colors.white : AppColors.textSecond,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14)),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(steps[idx],
-                style: TextStyle(
-                    fontSize: 11,
-                    color: active ? AppColors.primary : AppColors.textSecond,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.normal)),
-          ]);
+              const SizedBox(height: 4),
+              Text(steps[idx],
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: active ? AppColors.primary : AppColors.textSecond,
+                      fontWeight:
+                          active ? FontWeight.w600 : FontWeight.normal)),
+            ]),
+          );
         }),
       ),
     );

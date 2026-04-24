@@ -36,6 +36,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   File? _fotoFile;
   bool _nikLoading = false;
 
+  final FocusNode _blankFocus = FocusNode();
+
   @override
   void dispose() {
     _nikCtrl.dispose();
@@ -43,6 +45,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _tempatCtrl.dispose();
     _alamatCtrl.dispose();
     _noHpCtrl.dispose();
+    _blankFocus.dispose();
     super.dispose();
   }
 
@@ -54,6 +57,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   }
 
   void _showFotoPicker() {
+    FocusScope.of(context).requestFocus(_blankFocus);
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -89,6 +94,10 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   }
 
   Future<void> _pickTanggal({required bool isHpht}) async {
+    FocusScope.of(context).requestFocus(_blankFocus);
+
+    await Future.delayed(const Duration(milliseconds: 150));
+
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -201,6 +210,12 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       createdAt: now,
       updatedAt: now,
     );
+    final existing =
+        await context.read<PatientProvider>().checkNik(_nikCtrl.text.trim());
+    if (existing != null) {
+      _showTransferSheet(existing);
+      return;
+    }
     final ok =
         await context.read<PatientProvider>().addPatient(patient, _fotoFile!);
     if (!mounted) return;
@@ -226,154 +241,159 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(title: const Text(AppStrings.tambahPasien)),
-        body: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Foto
-                  Center(
-                    child: GestureDetector(
-                      onTap: _showFotoPicker,
-                      child: Stack(children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: _fotoFile != null
-                              ? Image.file(_fotoFile!,
-                                  width: 120, height: 120, fit: BoxFit.cover)
-                              : Container(
-                                  width: 120,
-                                  height: 120,
-                                  color: AppColors.redPale,
-                                  child: const Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.camera_alt_rounded,
-                                            color: AppColors.primary, size: 36),
-                                        SizedBox(height: 6),
-                                        Text('Tambah Foto *',
-                                            style: TextStyle(
-                                                color: AppColors.primary,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600)),
-                                      ]),
-                                ),
-                        ),
-                        if (_fotoFile != null)
-                          Positioned(
-                              bottom: 6,
-                              right: 6,
-                              child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle),
-                                  child: const Icon(Icons.edit,
-                                      color: Colors.white, size: 16))),
-                      ]),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // NIK + cek duplikat
-                  Row(children: [
-                    Expanded(
-                      child: CustomTextField(
-                        controller: _nikCtrl,
-                        label: AppStrings.nikLabel,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(16)
-                        ],
-                        validator: Validators.nik,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _checkNik(),
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Foto
+                    Center(
+                      child: GestureDetector(
+                        onTap: _showFotoPicker,
+                        child: Stack(children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: _fotoFile != null
+                                ? Image.file(_fotoFile!,
+                                    width: 120, height: 120, fit: BoxFit.cover)
+                                : Container(
+                                    width: 120,
+                                    height: 120,
+                                    color: AppColors.redPale,
+                                    child: const Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.camera_alt_rounded,
+                                              color: AppColors.primary,
+                                              size: 36),
+                                          SizedBox(height: 6),
+                                          Text('Tambah Foto *',
+                                              style: TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600)),
+                                        ]),
+                                  ),
+                          ),
+                          if (_fotoFile != null)
+                            Positioned(
+                                bottom: 6,
+                                right: 6,
+                                child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle),
+                                    child: const Icon(Icons.edit,
+                                        color: Colors.white, size: 16))),
+                        ]),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    _nikLoading
-                        ? const SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2.5, color: AppColors.primary))
-                        : IconButton(
-                            icon: const Icon(Icons.manage_search_rounded,
-                                size: 28, color: AppColors.primary),
-                            onPressed: _checkNik,
-                            tooltip: 'Cek NIK'),
+                    const SizedBox(height: 20),
+
+                    // NIK + cek duplikat
+                    Row(children: [
+                      Expanded(
+                        child: CustomTextField(
+                          controller: _nikCtrl,
+                          label: AppStrings.nikLabel,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(16)
+                          ],
+                          validator: Validators.nik,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _checkNik(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _nikLoading
+                          ? const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2.5, color: AppColors.primary))
+                          : IconButton(
+                              icon: const Icon(Icons.manage_search_rounded,
+                                  size: 28, color: AppColors.primary),
+                              onPressed: _checkNik,
+                              tooltip: 'Cek NIK'),
+                    ]),
+                    const SizedBox(height: 14),
+
+                    CustomTextField(
+                        controller: _namaCtrl,
+                        label: AppStrings.namaLabel,
+                        validator: (v) => Validators.required(v, 'Nama'),
+                        textInputAction: TextInputAction.next),
+                    const SizedBox(height: 14),
+                    CustomTextField(
+                        controller: _tempatCtrl,
+                        label: AppStrings.tempatLahirLabel,
+                        validator: (v) =>
+                            Validators.required(v, 'Tempat lahir'),
+                        textInputAction: TextInputAction.next),
+                    const SizedBox(height: 14),
+
+                    // Tanggal Lahir
+                    _buildDateField('Tanggal Lahir *', _tanggalLahir,
+                        () => _pickTanggal(isHpht: false)),
+                    const SizedBox(height: 14),
+
+                    CustomTextField(
+                        controller: _alamatCtrl,
+                        label: AppStrings.alamatLabel,
+                        maxLines: 3,
+                        validator: (v) => Validators.required(v, 'Alamat')),
+                    const SizedBox(height: 14),
+                    CustomTextField(
+                        controller: _noHpCtrl,
+                        label: AppStrings.noHpLabel,
+                        keyboardType: TextInputType.phone,
+                        validator: Validators.noHp,
+                        textInputAction: TextInputAction.done),
+                    const SizedBox(height: 14),
+
+                    // HPHT
+                    _buildDateField(
+                      'HPHT (Hari Pertama Haid Terakhir) *',
+                      _hpht,
+                      () => _pickTanggal(isHpht: true),
+                      sub: _hpht != null
+                          ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht!)} minggu'
+                          : null,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Golongan Darah
+                    DropdownButtonFormField<GolonganDarah>(
+                      value: _golDarah,
+                      decoration: const InputDecoration(
+                          labelText: AppStrings.golDarahLabel,
+                          filled: true,
+                          fillColor: AppColors.surface),
+                      items: GolonganDarah.values
+                          .map((g) => DropdownMenuItem(
+                              value: g,
+                              child: Text(g.value,
+                                  style: const TextStyle(fontSize: 16))))
+                          .toList(),
+                      onChanged: (v) => setState(() => _golDarah = v!),
+                    ),
+                    const SizedBox(height: 28),
+
+                    CustomButton(
+                        label: AppStrings.simpan,
+                        onPressed: isLoading ? null : _simpan),
+                    const SizedBox(height: 24),
                   ]),
-                  const SizedBox(height: 14),
-
-                  CustomTextField(
-                      controller: _namaCtrl,
-                      label: AppStrings.namaLabel,
-                      validator: (v) => Validators.required(v, 'Nama'),
-                      textInputAction: TextInputAction.next),
-                  const SizedBox(height: 14),
-                  CustomTextField(
-                      controller: _tempatCtrl,
-                      label: AppStrings.tempatLahirLabel,
-                      validator: (v) => Validators.required(v, 'Tempat lahir'),
-                      textInputAction: TextInputAction.next),
-                  const SizedBox(height: 14),
-
-                  // Tanggal Lahir
-                  _buildDateField('Tanggal Lahir *', _tanggalLahir,
-                      () => _pickTanggal(isHpht: false)),
-                  const SizedBox(height: 14),
-
-                  CustomTextField(
-                      controller: _alamatCtrl,
-                      label: AppStrings.alamatLabel,
-                      maxLines: 3,
-                      validator: (v) => Validators.required(v, 'Alamat')),
-                  const SizedBox(height: 14),
-                  CustomTextField(
-                      controller: _noHpCtrl,
-                      label: AppStrings.noHpLabel,
-                      keyboardType: TextInputType.phone,
-                      validator: Validators.noHp,
-                      textInputAction: TextInputAction.done),
-                  const SizedBox(height: 14),
-
-                  // HPHT
-                  _buildDateField(
-                    'HPHT (Hari Pertama Haid Terakhir) *',
-                    _hpht,
-                    () => _pickTanggal(isHpht: true),
-                    sub: _hpht != null
-                        ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht!)} minggu'
-                        : null,
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Golongan Darah
-                  DropdownButtonFormField<GolonganDarah>(
-                    value: _golDarah,
-                    decoration: const InputDecoration(
-                        labelText: AppStrings.golDarahLabel,
-                        filled: true,
-                        fillColor: AppColors.surface),
-                    items: GolonganDarah.values
-                        .map((g) => DropdownMenuItem(
-                            value: g,
-                            child: Text(g.value,
-                                style: const TextStyle(fontSize: 16))))
-                        .toList(),
-                    onChanged: (v) => setState(() => _golDarah = v!),
-                  ),
-                  const SizedBox(height: 28),
-
-                  CustomButton(
-                      label: AppStrings.simpan,
-                      onPressed: isLoading ? null : _simpan),
-                  const SizedBox(height: 24),
-                ]),
+            ),
           ),
         ),
       ),

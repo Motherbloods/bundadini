@@ -20,6 +20,7 @@ class KaderHomeScreen extends StatefulWidget {
 
 class _KaderHomeScreenState extends State<KaderHomeScreen> {
   final _searchCtrl = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   String _query = '';
 
   @override
@@ -38,6 +39,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -94,6 +96,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _searchCtrl,
+                      focusNode: _searchFocusNode,
                       onChanged: (v) => setState(() => _query = v),
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(

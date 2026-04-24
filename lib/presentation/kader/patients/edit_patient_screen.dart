@@ -97,6 +97,8 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
   }
 
   Future<void> _pickTanggal({required bool isHpht}) async {
+    FocusScope.of(context).unfocus();
+    await Future.delayed(const Duration(milliseconds: 100));
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
