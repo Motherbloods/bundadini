@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import '../models/patient_model.dart';
 import '../models/kader_history_model.dart';
+import '../services/cloudinary_service.dart';
 
 class PatientRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final _uuid = const Uuid();
 
   Future<List<PatientModel>> fetchByKader(String kaderId) async {
@@ -136,9 +135,7 @@ class PatientRepository {
   }
 
   Future<String> _uploadFoto(String patientId, File file) async {
-    final ref = _storage.ref().child('patients/$patientId/foto.jpg');
-    await ref.putFile(file);
-    return ref.getDownloadURL();
+    return CloudinaryService.uploadFoto(file, patientId);
   }
 
   Future<void> _addKaderHistory(
