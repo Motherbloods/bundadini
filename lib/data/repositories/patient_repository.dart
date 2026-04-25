@@ -153,4 +153,11 @@ class PatientRepository {
     );
     await ref.set(hist.toJson());
   }
+
+  Future<void> tandaiSelesai(String patientId) async {
+    await _db.collection('patients').doc(patientId).update({
+      'status': 'selesai',
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
 }

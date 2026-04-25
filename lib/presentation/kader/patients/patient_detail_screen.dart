@@ -1,3 +1,4 @@
+import 'package:bundadini/presentation/_widgets/konfirmasi_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +37,31 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
     context.read<ExaminationProvider>().loadHistory(widget.patientId);
   }
 
+  Future<void> _tandaiSelesai(PatientModel patient) async {
+    final ok = await KonfirmasiDialog.show(
+      context,
+      title: 'Tandai Sudah Melahirkan',
+      message:
+          '${patient.nama} sudah melahirkan dan tidak perlu periksa lagi?\n\n'
+          'Status akan berubah menjadi Selesai.',
+      labelYa: 'Ya, Sudah Melahirkan',
+      isDangerous: false,
+    );
+    if (!ok || !mounted) return;
+
+    final result =
+        await context.read<PatientProvider>().tandaiSelesai(patient.id);
+    if (!mounted) return;
+
+    if (result) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('🎉 Selamat! Pasien telah selesai masa kehamilan.'),
+        backgroundColor: AppColors.success,
+        duration: Duration(seconds: 3),
+      ));
+    }
+  }
+
   @override
   void dispose() {
     _tab.dispose();
@@ -59,6 +85,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
       appBar: AppBar(
         title: Text(patient.nama, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
+          if (patient.status == StatusPasien.aktif)
+            IconButton(
+              icon: const Icon(Icons.child_care_rounded),
+              tooltip: 'Tandai Sudah Melahirkan',
+              onPressed: () => _tandaiSelesai(patient),
+            ),
           IconButton(
             icon: const Icon(Icons.edit_rounded),
             tooltip: 'Edit Biodata',
@@ -86,12 +118,35 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.medical_services_rounded),
-            label: const Text(AppStrings.periksaSekarang),
-            onPressed: () =>
-                context.push('/kader/patients/${patient.id}/examine'),
-          ),
+          child: patient.status == StatusPasien.selesai
+              ? Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.successLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.child_care_rounded, color: AppColors.success),
+                      SizedBox(width: 8),
+                      Text(
+                        '🎉 Ibu sudah melahirkan',
+                        style: TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ElevatedButton.icon(
+                  icon: const Icon(Icons.medical_services_rounded),
+                  label: const Text(AppStrings.periksaSekarang),
+                  onPressed: () =>
+                      context.push('/kader/patients/${patient.id}/examine'),
+                ),
         ),
       ),
     );

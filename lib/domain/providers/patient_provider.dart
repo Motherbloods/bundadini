@@ -159,4 +159,28 @@ class PatientProvider extends ChangeNotifier {
   void _clearError() {
     _errorMessage = null;
   }
+
+  Future<bool> tandaiSelesai(String patientId) async {
+    _setLoading(true);
+    try {
+      await _repo.tandaiSelesai(patientId);
+      // Update local state
+      final idx = _patients.indexWhere((p) => p.id == patientId);
+      if (idx != -1) {
+        _patients[idx] = _patients[idx].copyWith(status: StatusPasien.selesai);
+      }
+      if (_selectedPatient?.id == patientId) {
+        _selectedPatient =
+            _selectedPatient?.copyWith(status: StatusPasien.selesai);
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal mengubah status pasien.';
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }
