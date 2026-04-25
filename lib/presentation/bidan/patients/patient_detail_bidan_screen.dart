@@ -1,3 +1,4 @@
+import 'package:bundadini/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,15 +23,36 @@ class PatientDetailBidanScreen extends StatefulWidget {
 class _PatientDetailBidanScreenState extends State<PatientDetailBidanScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  final _authRepo = AuthRepository();
+  String _kaderNama = 'Memuat...';
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PatientProvider>().loadPatient(widget.patientId);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<PatientProvider>().loadPatient(widget.patientId);
+
       context.read<ExaminationProvider>().loadHistory(widget.patientId);
+
+      await _fetchKaderNama();
     });
+  }
+
+  Future<void> _fetchKaderNama() async {
+    print('Mencari nama kader untuk pasien ${widget.patientId}...');
+    final patient = context.read<PatientProvider>().selectedPatient;
+    print('Data pasien: ${patient?.nama}, Kader ID: ${patient?.kaderId}');
+    if (patient == null) return;
+
+    final kader = await _authRepo.fetchUserById(patient.kaderId);
+    print('Kader ID: ${patient.kaderId}, Nama: ${kader?.nama}');
+    if (mounted) {
+      setState(() {
+        _kaderNama = kader?.nama ?? 'Tidak ditemukan';
+      });
+    }
   }
 
   @override
@@ -92,7 +114,7 @@ class _PatientDetailBidanScreenState extends State<PatientDetailBidanScreen>
                 _InfoRow('HPHT', DateFormatter.toDisplay(patient.hpht)),
                 _InfoRow('Usia Kehamilan',
                     '${DateFormatter.usiaKehamilanMinggu(patient.hpht)} minggu'),
-                _InfoRow('Kader Saat Ini', patient.kaderId),
+                _InfoRow('Kader Saat Ini', _kaderNama),
                 _InfoRow('Status', patient.status.label),
               ]),
             )),

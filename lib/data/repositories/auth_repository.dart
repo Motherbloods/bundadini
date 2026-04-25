@@ -127,4 +127,14 @@ class AuthRepository {
   Future<void> activateKader(String kaderId) async {
     await _db.collection('users').doc(kaderId).update({'isActive': true});
   }
+
+  Future<UserModel?> fetchUserById(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      return UserModel.fromJson({...doc.data()!, 'id': doc.id});
+    } catch (_) {
+      return null;
+    }
+  }
 }
