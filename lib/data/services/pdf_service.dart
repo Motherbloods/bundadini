@@ -55,18 +55,23 @@ class PdfService {
 
   static pw.Widget _buildRekapHeader(String puskesmas, DateTime from,
       DateTime to, pw.Font fontBold, pw.Font font) {
-    return pw.Column(children: [
-      pw.Text(puskesmas.toUpperCase(),
-          style: pw.TextStyle(font: fontBold, fontSize: 14, color: _red)),
-      pw.SizedBox(height: 4),
-      pw.Text('REKAP PEMERIKSAAN IBU HAMIL',
-          style: pw.TextStyle(font: fontBold, fontSize: 12)),
-      pw.SizedBox(height: 4),
-      pw.Text(
-        'Periode: ${_fmt(from)} s/d ${_fmt(to)}   |   Tanggal Cetak: ${_fmt(DateTime.now())}',
-        style: pw.TextStyle(font: font, fontSize: 9, color: _grey),
+    return pw.Center(
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Text(puskesmas.toUpperCase(),
+              style: pw.TextStyle(font: fontBold, fontSize: 14, color: _red)),
+          pw.SizedBox(height: 4),
+          pw.Text('REKAP PEMERIKSAAN IBU HAMIL',
+              style: pw.TextStyle(font: fontBold, fontSize: 12)),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Periode: ${_fmt(from)} s/d ${_fmt(to)}   |   Tanggal Cetak: ${_fmt(DateTime.now())}',
+            style: pw.TextStyle(font: font, fontSize: 9, color: _grey),
+          ),
+        ],
       ),
-    ]);
+    );
   }
 
   static pw.Widget _buildRekapTable(
@@ -246,18 +251,23 @@ class PdfService {
 
   static pw.Widget _buildHeader(
       String puskesmas, ExaminationModel exam, pw.Font fontBold, pw.Font font) {
-    return pw.Column(children: [
-      pw.Text(puskesmas.toUpperCase(),
-          style: pw.TextStyle(font: fontBold, fontSize: 16, color: _red)),
-      pw.SizedBox(height: 4),
-      pw.Text('LAPORAN PEMERIKSAAN IBU HAMIL',
-          style: pw.TextStyle(font: fontBold, fontSize: 13)),
-      pw.SizedBox(height: 4),
-      pw.Text(
-        'Tanggal Cetak: ${_fmt(DateTime.now())}',
-        style: pw.TextStyle(font: font, fontSize: 10, color: _grey),
+    return pw.Center(
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Text(puskesmas.toUpperCase(),
+              style: pw.TextStyle(font: fontBold, fontSize: 16, color: _red)),
+          pw.SizedBox(height: 4),
+          pw.Text('LAPORAN PEMERIKSAAN IBU HAMIL',
+              style: pw.TextStyle(font: fontBold, fontSize: 13)),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Tanggal Cetak: ${_fmt(DateTime.now())}',
+            style: pw.TextStyle(font: font, fontSize: 10, color: _grey),
+          ),
+        ],
       ),
-    ]);
+    );
   }
 
   static pw.Widget _buildPatientInfo(
