@@ -61,28 +61,28 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 56),
 
-              // ── Header ──────────────────────────────────
+              // Header
               Center(
                 child: Column(
                   children: [
                     Container(
-                      width: 88,
-                      height: 88,
+                      width: 95,
+                      height: 95,
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
+                            color: AppColors.primary.withValues(alpha: 0.25),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.favorite_rounded,
-                        color: Colors.white,
-                        size: 48,
+                      child: Image.asset(
+                        'assets/icons/logo.jpg',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
-              // ── Form Card ───────────────────────────────
+              // Form Card
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
