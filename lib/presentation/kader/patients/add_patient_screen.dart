@@ -130,49 +130,62 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(
-            24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                const Icon(Icons.info_outline_rounded,
-                    color: AppColors.warning, size: 28),
-                const SizedBox(width: 10),
-                Text(AppStrings.nikDuplikat,
-                    style: Theme.of(context).textTheme.titleLarge),
-              ]),
-              const SizedBox(height: 12),
-              Text('${existing.nama} (NIK: ${existing.nik}) sudah terdaftar.',
-                  style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 4),
-              Text('Apakah ingin memindahkan pasien ini ke kader Anda?',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: AppColors.textSecond)),
-              const SizedBox(height: 20),
-              CustomButton(
-                label: AppStrings.transferKader,
-                onPressed: () async {
-                  Navigator.pop(context);
-                  final auth = context.read<AuthProvider>();
-                  final ok =
-                      await context.read<PatientProvider>().transferKader(
-                            patientId: existing.id,
-                            newKaderId: auth.currentUser!.id,
-                            newKaderNama: auth.currentUser!.nama,
-                            oldKaderId: existing.kaderId,
-                          );
-                  if (mounted && ok) context.pop();
-                },
-              ),
-              const SizedBox(height: 10),
-              CustomButton.outline(
-                  label: AppStrings.batalTransfer,
-                  onPressed: () => Navigator.pop(context)),
-            ]),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height * 0.85, // ← max 85% layar
+          ),
+          child: SingleChildScrollView(
+            // ← bisa scroll jika konten panjang
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.info_outline_rounded,
+                      color: AppColors.warning, size: 28),
+                  const SizedBox(width: 10),
+                  Text(AppStrings.nikDuplikat,
+                      style: Theme.of(context).textTheme.titleLarge),
+                ]),
+                const SizedBox(height: 12),
+                Text('${existing.nama} (NIK: ${existing.nik}) sudah terdaftar.',
+                    style: Theme.of(context).textTheme.bodyLarge),
+                const SizedBox(height: 4),
+                Text('Apakah ingin memindahkan pasien ini ke kader Anda?',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: AppColors.textSecond)),
+                const SizedBox(height: 20),
+                CustomButton(
+                  label: AppStrings.transferKader,
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    final auth = context.read<AuthProvider>();
+                    final ok =
+                        await context.read<PatientProvider>().transferKader(
+                              patientId: existing.id,
+                              newKaderId: auth.currentUser!.id,
+                              newKaderNama: auth.currentUser!.nama,
+                              oldKaderId: existing.kaderId,
+                            );
+                    if (mounted && ok) context.pop();
+                  },
+                ),
+                const SizedBox(height: 10),
+                CustomButton.outline(
+                    label: AppStrings.batalTransfer,
+                    onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
