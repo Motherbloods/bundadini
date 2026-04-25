@@ -91,4 +91,8 @@ class AuthRepository {
   Future<void> deactivateKader(String kaderId) async {
     await _db.collection('users').doc(kaderId).update({'isActive': false});
   }
+
+  Future<void> activateKader(String kaderId) async {
+    await _db.collection('users').doc(kaderId).update({'isActive': true});
+  }
 }

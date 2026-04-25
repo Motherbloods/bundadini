@@ -1,3 +1,4 @@
+import 'package:bundadini/data/models/patient_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -101,7 +102,7 @@ class _ExportScreenState extends State<ExportScreen> {
 
   Future<void> _generateRekapPdf({
     required List<ExaminationModel> exams,
-    required Map<String, dynamic> patientMap,
+    required Map<String, PatientModel> patientMap,
     required String namaPuskesmas,
     required String bidanNama,
   }) async {
@@ -121,7 +122,7 @@ class _ExportScreenState extends State<ExportScreen> {
       patientNik: patient?.nik ?? '',
       patientTglLahir:
           patient != null ? DateFormatter.toDisplay(patient.tanggalLahir) : '',
-      patientGolDarah: patient?.golonganDarah.value ?? '',
+      patientGolDarah: patient?.golonganDarah.name ?? '',
       patientAlamat: patient?.alamat ?? '',
       patientNoHp: patient?.noHp ?? '',
       patientHpht: patient != null ? DateFormatter.toDisplay(patient.hpht) : '',

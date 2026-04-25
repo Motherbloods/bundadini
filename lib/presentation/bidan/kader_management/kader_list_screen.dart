@@ -49,6 +49,19 @@ class _KaderListScreenState extends State<KaderListScreen> {
     }
   }
 
+  Future<void> _activate(UserModel kader) async {
+    final ok = await KonfirmasiDialog.show(context,
+        title: 'Aktifkan Kader',
+        message:
+            'Aktifkan kembali ${kader.nama}? Kader dapat login kembali setelah ini.',
+        labelYa: 'Aktifkan',
+        isDangerous: false);
+    if (ok) {
+      await _repo.activateKader(kader.id);
+      await _load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,6 +88,7 @@ class _KaderListScreenState extends State<KaderListScreen> {
                     itemBuilder: (_, i) => _KaderCard(
                       kader: _kaders[i],
                       onDeactivate: () => _deactivate(_kaders[i]),
+                      onActivate: () => _activate(_kaders[i]),
                     ),
                   ),
                 ),
@@ -91,7 +105,12 @@ class _KaderListScreenState extends State<KaderListScreen> {
 class _KaderCard extends StatelessWidget {
   final UserModel kader;
   final VoidCallback onDeactivate;
-  const _KaderCard({required this.kader, required this.onDeactivate});
+  final VoidCallback onActivate;
+  const _KaderCard({
+    required this.kader,
+    required this.onDeactivate,
+    required this.onActivate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -159,9 +178,11 @@ class _KaderCard extends StatelessWidget {
                   color: AppColors.textSecond),
               onSelected: (v) {
                 if (v == 'deactivate') onDeactivate();
+                if (v == 'activate') onActivate(); // ← tambah ini
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(
+                if (kader.isActive)
+                  const PopupMenuItem(
                     value: 'deactivate',
                     child: Row(children: [
                       Icon(Icons.person_off_rounded,
@@ -169,7 +190,19 @@ class _KaderCard extends StatelessWidget {
                       SizedBox(width: 8),
                       Text('Nonaktifkan',
                           style: TextStyle(color: AppColors.danger)),
-                    ])),
+                    ]),
+                  ),
+                if (!kader.isActive)
+                  const PopupMenuItem(
+                    value: 'activate',
+                    child: Row(children: [
+                      Icon(Icons.person_rounded,
+                          color: AppColors.success, size: 20),
+                      SizedBox(width: 8),
+                      Text('Aktifkan Kembali',
+                          style: TextStyle(color: AppColors.success)),
+                    ]),
+                  ),
               ],
             ),
         ]),
