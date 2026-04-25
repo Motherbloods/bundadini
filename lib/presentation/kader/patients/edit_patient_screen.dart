@@ -156,7 +156,12 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         body: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              MediaQuery.of(context).padding.bottom + 28,
+            ),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
