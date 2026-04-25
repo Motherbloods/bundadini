@@ -102,7 +102,7 @@ class _HistoryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/kader/examine/result', extra: exam.id),
+        onTap: () => context.push('/shared/examine/result', extra: exam.id),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child:

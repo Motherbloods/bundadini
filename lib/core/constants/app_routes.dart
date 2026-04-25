@@ -11,7 +11,7 @@ class AppRoutes {
   static const String patientDetail = '/kader/patients/:patientId';
   static const String editPatient = '/kader/patients/:patientId/edit';
   static const String examinationStepper = '/kader/patients/:patientId/examine';
-  static const String examinationResult = '/kader/examine/result';
+  static const String examinationResult = '/shared/examine/result';
   static const String examinationHistory = '/kader/patients/:patientId/history';
 
   // Bidan

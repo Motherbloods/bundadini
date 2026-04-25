@@ -219,9 +219,14 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
                 icon: Icons.picture_as_pdf_rounded),
             const SizedBox(height: 10),
             CustomButton.outline(
-                label: AppStrings.kembaliBeranda,
-                onPressed: () => context.go(AppRoutes.kaderHome),
-                icon: Icons.home_rounded),
+              label: AppStrings.kembaliBeranda,
+              onPressed: () {
+                final isBidan = context.read<AuthProvider>().isBidan;
+                context.go(
+                    isBidan ? AppRoutes.bidanDashboard : AppRoutes.kaderHome);
+              },
+              icon: Icons.home_rounded,
+            ),
           ]),
         ),
       ),

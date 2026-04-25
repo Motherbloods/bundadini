@@ -26,6 +26,10 @@ import '../presentation/bidan/reports/export_screen.dart';
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+  static const _sharedRoutes = [
+    '/shared/examine/result',
+  ];
+
   static GoRouter get router {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
@@ -41,6 +45,14 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.login,
           builder: (_, __) => const LoginScreen(),
+        ),
+
+        GoRoute(
+          path: '/shared/examine/result',
+          builder: (_, state) {
+            final examId = state.extra as String;
+            return ExaminationResultScreen(examinationId: examId);
+          },
         ),
 
         // Kader
@@ -70,13 +82,7 @@ class AppRouter {
             patientId: state.pathParameters['patientId']!,
           ),
         ),
-        GoRoute(
-          path: AppRoutes.examinationResult,
-          builder: (_, state) {
-            final examId = state.extra as String;
-            return ExaminationResultScreen(examinationId: examId);
-          },
-        ),
+
         GoRoute(
           path: '/kader/patients/:patientId/history',
           builder: (_, state) => ExaminationHistoryScreen(
@@ -120,35 +126,40 @@ class AppRouter {
     final authProvider = context.read<AuthProvider>();
     final isLoggedIn = authProvider.isLoggedIn;
     final user = authProvider.currentUser;
+    final location = state.matchedLocation;
 
-    final onSplash = state.matchedLocation == AppRoutes.splash;
-    final onLogin = state.matchedLocation == AppRoutes.login;
+    final onSplash = location == AppRoutes.splash;
+    final onLogin = location == AppRoutes.login;
 
-    // Belum login → ke login (kecuali sudah di splash/login)
+    // Belum login → ke login
     if (!isLoggedIn) {
       if (onSplash || onLogin) return null;
       return AppRoutes.login;
     }
 
-    // Sudah login tapi di splash/login → arahkan ke home sesuai role
+    // Sudah login tapi masih di splash/login → arahkan ke home
     if (onSplash || onLogin) {
       return user?.role == UserRole.bidan
           ? AppRoutes.bidanDashboard
           : AppRoutes.kaderHome;
     }
 
+    // Route shared → boleh diakses semua role, skip guard
+    final onSharedPage = _sharedRoutes.any((r) => location.startsWith(r));
+    if (onSharedPage) return null;
+
     // Kader coba akses halaman bidan → redirect ke home kader
-    final onBidanPage = state.matchedLocation.startsWith('/bidan');
+    final onBidanPage = location.startsWith('/bidan');
     if (onBidanPage && user?.role == UserRole.kader) {
       return AppRoutes.kaderHome;
     }
 
     // Bidan coba akses halaman kader → redirect ke dashboard bidan
-    final onKaderPage = state.matchedLocation.startsWith('/kader');
+    final onKaderPage = location.startsWith('/kader');
     if (onKaderPage && user?.role == UserRole.bidan) {
       return AppRoutes.bidanDashboard;
     }
 
-    return null; // tidak ada redirect
+    return null;
   }
 }
