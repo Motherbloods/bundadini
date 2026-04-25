@@ -30,10 +30,13 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final user = await _repo.getCurrentUserModel();
-    if (user != null) {
+    if (user != null && user.isActive) {
       _currentUser = user;
       _status = AuthStatus.authenticated;
     } else {
+      if (user != null && !user.isActive) {
+        await _repo.logout();
+      }
       _status = AuthStatus.unauthenticated;
     }
     notifyListeners();
@@ -45,6 +48,16 @@ class AuthProvider extends ChangeNotifier {
     _clearError();
     try {
       _currentUser = await _repo.login(email, password);
+
+      if (!_currentUser!.isActive) {
+        await _repo.logout();
+        _currentUser = null;
+        _errorMessage = 'Akun ini dinonaktifkan. Hubungi bidan pendamping.';
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
