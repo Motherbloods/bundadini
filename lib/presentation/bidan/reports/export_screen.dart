@@ -73,7 +73,20 @@ class _ExportScreenState extends State<ExportScreen> {
     });
     try {
       final exams = await _examRepo.fetchByDateRange(_from, _to);
-      final patients = await _patientRepo.fetchAll();
+
+      if (exams.isEmpty) {
+        if (mounted) _showError('Tidak ada data di rentang tanggal ini.');
+        return;
+      }
+
+      // Ambil hanya patient ID yang unik agar tidak fetch berulang
+      final patientIds = exams.map((e) => e.patientId).toSet();
+      final patientMap = <String, PatientModel>{};
+      for (final id in patientIds) {
+        final p = await _patientRepo.fetchById(id);
+        if (p != null) patientMap[id] = p;
+      }
+
       setState(() => _statusMsg = 'Membuat PDF...');
 
       final auth = context.read<AuthProvider>();
@@ -83,7 +96,7 @@ class _ExportScreenState extends State<ExportScreen> {
 
       await _generateRekapPdf(
         exams: exams,
-        patientMap: {for (final p in patients) p.id: p},
+        patientMap: patientMap,
         namaPuskesmas: namaPuskesmas,
         bidanNama: bidanNama,
       );
@@ -100,35 +113,21 @@ class _ExportScreenState extends State<ExportScreen> {
     }
   }
 
+  /// Membuat PDF rekap untuk SEMUA pemeriksaan dalam range tanggal.
+  /// PdfService.generateRekapAndPrint menerima list lengkap, bukan hanya satu record.
   Future<void> _generateRekapPdf({
     required List<ExaminationModel> exams,
     required Map<String, PatientModel> patientMap,
     required String namaPuskesmas,
     required String bidanNama,
   }) async {
-    // Gunakan PdfService dengan format rekap tabel
-    // Untuk setiap pemeriksaan buat baris ringkas
-    if (exams.isEmpty) {
-      _showError('Tidak ada data di rentang tanggal ini.');
-      return;
-    }
-    // Ambil satu pemeriksaan sebagai contoh untuk format PDF rekap
-    // Dalam produksi buat page rekap tabel semua pemeriksaan
-    final first = exams.first;
-    final patient = patientMap[first.patientId];
-    await PdfService.generateAndPrint(
-      exam: first,
-      patientNama: patient?.nama ?? '',
-      patientNik: patient?.nik ?? '',
-      patientTglLahir:
-          patient != null ? DateFormatter.toDisplay(patient.tanggalLahir) : '',
-      patientGolDarah: patient?.golonganDarah.name ?? '',
-      patientAlamat: patient?.alamat ?? '',
-      patientNoHp: patient?.noHp ?? '',
-      patientHpht: patient != null ? DateFormatter.toDisplay(patient.hpht) : '',
-      patientFotoUrl: patient?.fotoUrl ?? '',
+    await PdfService.generateRekapAndPrint(
+      examinations: exams,
+      patientMap: patientMap,
       namaPuskesmas: namaPuskesmas,
       bidanNama: bidanNama,
+      from: _from,
+      to: _to,
     );
   }
 
@@ -215,7 +214,7 @@ class _ExportScreenState extends State<ExportScreen> {
             )),
             const SizedBox(height: 20),
 
-            // Export Excel
+            // Export Options
             const SectionHeader(title: 'Format Ekspor'),
             const SizedBox(height: 12),
             Card(
@@ -268,10 +267,12 @@ class _ExportScreenState extends State<ExportScreen> {
                       icon: Icons.picture_as_pdf_rounded,
                       color: AppColors.danger,
                       title: AppStrings.exportPdfBtn,
-                      subtitle: 'Laporan PDF siap cetak dan tandatangan',
+                      subtitle:
+                          'Laporan PDF rekap semua pemeriksaan, siap cetak & tandatangan',
                       columns: [
                         'Data pasien lengkap',
-                        'Tabel parameter pemeriksaan',
+                        'Tabel rekap semua pemeriksaan',
+                        'Taksiran Persalinan (TP)',
                         'Kesimpulan kondisi ibu & janin',
                         'Rekomendasi',
                         'Ruang tanda tangan bidan',
