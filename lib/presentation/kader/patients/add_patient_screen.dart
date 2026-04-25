@@ -246,7 +246,12 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.of(context).viewInsets.bottom + 24 + 40,
+              ),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
