@@ -125,11 +125,28 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     if (_step > (_isPasienBaru ? 0 : 1)) setState(() => _step--);
   }
 
-  // Simpa
-
   Future<void> _simpan() async {
     final auth = context.read<AuthProvider>();
-    final rules = context.read<RulesProvider>().rules;
+    final rulesProvider = context.read<RulesProvider>();
+
+    // Pastikan rules sudah selesai di-load
+    if (!rulesProvider.isLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Sedang memuat data rules, coba lagi sebentar...'),
+        backgroundColor: AppColors.warning,
+      ));
+      // Coba fetch ulang
+      await rulesProvider.fetchRules();
+      return;
+    }
+
+    if (rulesProvider.rules.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Data rules tidak ditemukan. Hubungi administrator.'),
+        backgroundColor: AppColors.danger,
+      ));
+      return;
+    }
 
     final saved = await context.read<ExaminationProvider>().saveExamination(
           patientId: widget.patientId,
@@ -152,7 +169,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           catatanKader: _catatanCtrl.text.trim().isEmpty
               ? null
               : _catatanCtrl.text.trim(),
-          rules: rules,
+          rules: rulesProvider.rules, // ← sudah dipastikan tidak kosong
         );
 
     if (!mounted) return;
@@ -161,15 +178,13 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       await CetakDialog.show(
         context,
         onCetak: () => context.go(AppRoutes.examinationResult, extra: saved.id),
-        onNanti: () {
-          // Kembali ke detail pasien
-          context.go('/kader/patients/${widget.patientId}');
-        },
+        onNanti: () => context.go('/kader/patients/${widget.patientId}'),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Gagal menyimpan pemeriksaan'),
-          backgroundColor: AppColors.danger));
+        content: Text('Gagal menyimpan pemeriksaan'),
+        backgroundColor: AppColors.danger,
+      ));
     }
   }
 
@@ -227,12 +242,21 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
                   const SizedBox(width: 12),
                 ],
                 Expanded(
-                  child: CustomButton(
-                    label: _step == 3 ? AppStrings.simpanPemeriksaan : 'Lanjut',
-                    onPressed: isLoading ? null : _next,
-                    icon: _step == 3
-                        ? Icons.save_rounded
-                        : Icons.arrow_forward_rounded,
+                  child: Consumer<RulesProvider>(
+                    builder: (_, rulesProvider, __) => CustomButton(
+                      label: _step == 3
+                          ? (rulesProvider.isLoaded
+                              ? AppStrings.simpanPemeriksaan
+                              : 'Memuat rules...')
+                          : 'Lanjut',
+                      onPressed:
+                          (isLoading || (_step == 3 && !rulesProvider.isLoaded))
+                              ? null
+                              : _next,
+                      icon: _step == 3
+                          ? Icons.save_rounded
+                          : Icons.arrow_forward_rounded,
+                    ),
                   ),
                 ),
               ]),

@@ -97,8 +97,6 @@ class _AllPatientsScreenState extends State<AllPatientsScreen> {
                 _FilterChip('Aktif', 'aktif', _filterStatus,
                     () => setState(() => _filterStatus = 'aktif')),
                 const SizedBox(width: 8),
-                _FilterChip('Pindah', 'pindah', _filterStatus,
-                    () => setState(() => _filterStatus = 'pindah')),
                 const SizedBox(width: 8),
                 _FilterChip('Selesai', 'selesai', _filterStatus,
                     () => setState(() => _filterStatus = 'selesai')),
