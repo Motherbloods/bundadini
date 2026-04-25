@@ -1,3 +1,4 @@
+import 'package:bundadini/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -54,9 +55,24 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
     try {
       final patient = context.read<PatientProvider>().selectedPatient;
       final auth = context.read<AuthProvider>();
-      final namaPuskesmas =
+      String namaPuskesmas =
           auth.currentUser?.namaPuskesmas ?? AppStrings.defaultPuskesmas;
-      final bidanNama = auth.isBidan ? (auth.currentUser?.nama ?? '') : '';
+      String bidanNama = '';
+      if (auth.isBidan) {
+        bidanNama = auth.currentUser?.nama ?? '';
+      } else {
+        final bidanId = auth.currentUser?.createdBy ?? '';
+        if (bidanId.isNotEmpty) {
+          final authRepo = AuthRepository();
+          final bidan = await authRepo.fetchUserById(bidanId);
+          bidanNama = bidan?.nama ?? '';
+          if (namaPuskesmas == AppStrings.defaultPuskesmas &&
+              bidan?.namaPuskesmas != null &&
+              bidan!.namaPuskesmas!.trim().isNotEmpty) {
+            namaPuskesmas = bidan.namaPuskesmas!;
+          }
+        }
+      }
 
       await PdfService.generateAndPrint(
         exam: _exam!,
