@@ -72,6 +72,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     // Auto-hitung BMI saat BB/TB berubah
     _bbCtrl.addListener(_hitungBmi);
     _tbCtrl.addListener(_hitungBmi);
+    _bbCtrl.addListener(_hitungKenaikanBbRealtime);
   }
 
   @override
@@ -98,6 +99,8 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     final tb = double.tryParse(_tbCtrl.text.replaceAll(',', '.'));
     if (bb != null && tb != null && tb > 0) {
       setState(() => _bmi = RuleEngine.hitungBmi(bb, tb));
+    } else {
+      setState(() => _bmi = null);
     }
   }
 
@@ -106,6 +109,16 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     final history = context.read<ExaminationProvider>().history;
     if (bb != null && history.isNotEmpty) {
       setState(() => _kenaikanBb = bb - history.first.beratBadan);
+    }
+  }
+
+  void _hitungKenaikanBbRealtime() {
+    final bb = double.tryParse(_bbCtrl.text.replaceAll(',', '.'));
+    final history = context.read<ExaminationProvider>().history;
+    if (bb != null && history.isNotEmpty) {
+      setState(() => _kenaikanBb = bb - history.first.beratBadan);
+    } else {
+      setState(() => _kenaikanBb = null);
     }
   }
 
@@ -475,71 +488,110 @@ class _Step2TensiState extends State<_Step2Tensi> {
 }
 
 // Step 3: Antropometri─
-class _Step3Antropometri extends StatelessWidget {
+class _Step3Antropometri extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController bbCtrl, tbCtrl, lilaCtrl, lpertCtrl;
   final double? bmi, kenaikanBb;
-  const _Step3Antropometri(
-      {super.key,
-      required this.formKey,
-      required this.bbCtrl,
-      required this.tbCtrl,
-      required this.lilaCtrl,
-      required this.lpertCtrl,
-      this.bmi,
-      this.kenaikanBb});
+
+  const _Step3Antropometri({
+    super.key,
+    required this.formKey,
+    required this.bbCtrl,
+    required this.tbCtrl,
+    required this.lilaCtrl,
+    required this.lpertCtrl,
+    this.bmi,
+    this.kenaikanBb,
+  });
+
+  @override
+  State<_Step3Antropometri> createState() => _Step3AntropometriState();
+}
+
+class _Step3AntropometriState extends State<_Step3Antropometri> {
+  bool _isKek = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.lilaCtrl.addListener(_checkKek);
+    _checkKek(); // cek awal saat widget dibuka
+  }
+
+  void _checkKek() {
+    final val = double.tryParse(widget.lilaCtrl.text.replaceAll(',', '.'));
+
+    final kek = val != null && RuleEngine.isKek(val);
+
+    setState(() => _isKek = kek);
+  }
+
+  @override
+  void dispose() {
+    widget.lilaCtrl.removeListener(_checkKek);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lilaVal = double.tryParse(lilaCtrl.text.replaceAll(',', '.'));
-    final isKek = lilaVal != null && RuleEngine.isKek(lilaVal);
-
     return Form(
-        key: formKey,
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      key: widget.formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           const SectionHeader(title: AppStrings.step3Title),
           const SizedBox(height: 16),
           DecimalTextField(
-              controller: bbCtrl,
-              label: AppStrings.beratBadanLabel,
-              validator: Validators.beratBadan,
-              textInputAction: TextInputAction.next),
+            controller: widget.bbCtrl,
+            label: AppStrings.beratBadanLabel,
+            validator: Validators.beratBadan,
+            textInputAction: TextInputAction.next,
+          ),
           const SizedBox(height: 14),
           DecimalTextField(
-              controller: tbCtrl,
-              label: AppStrings.tinggiBadanLabel,
-              validator: Validators.tinggiBadan,
-              textInputAction: TextInputAction.next),
-          if (bmi != null) ...[
+            controller: widget.tbCtrl,
+            label: AppStrings.tinggiBadanLabel,
+            validator: Validators.tinggiBadan,
+            textInputAction: TextInputAction.next,
+          ),
+          if (widget.bmi != null) ...[
             const SizedBox(height: 10),
             _InfoTile(
-                'BMI',
-                '${bmi!.toStringAsFixed(1)} — ${RuleEngine.kategoriBmi(bmi!)}',
-                AppColors.info),
-            if (kenaikanBb != null)
+              'BMI',
+              '${widget.bmi!.toStringAsFixed(1)} — ${RuleEngine.kategoriBmi(widget.bmi!)}',
+              AppColors.info,
+            ),
+            if (widget.kenaikanBb != null)
               _InfoTile(
-                  'Kenaikan BB',
-                  '${kenaikanBb! >= 0 ? '+' : ''}${kenaikanBb!.toStringAsFixed(1)} kg dari pemeriksaan sebelumnya',
-                  kenaikanBb! < 0 ? AppColors.warning : AppColors.success),
+                'Kenaikan BB',
+                '${widget.kenaikanBb! >= 0 ? '+' : ''}${widget.kenaikanBb!.toStringAsFixed(1)} kg dari pemeriksaan sebelumnya',
+                widget.kenaikanBb! < 0 ? AppColors.warning : AppColors.success,
+              ),
           ],
           const SizedBox(height: 14),
           DecimalTextField(
-              controller: lilaCtrl,
-              label: AppStrings.lingkarLenganLabel,
-              validator: Validators.lingkarLengan,
-              textInputAction: TextInputAction.next),
-          if (isKek) ...[
+            controller: widget.lilaCtrl,
+            label: AppStrings.lingkarLenganLabel,
+            validator: Validators.lingkarLengan,
+            textInputAction: TextInputAction.next,
+          ),
+          if (_isKek) ...[
             const SizedBox(height: 8),
             const _InfoTile(
-                'Status LILA', '⚠️ KEK — LILA < 23.5 cm', AppColors.warning),
+              'Status LILA',
+              '⚠️ KEK — LILA < 23.5 cm',
+              AppColors.warning,
+            ),
           ],
           const SizedBox(height: 14),
           DecimalTextField(
-              controller: lpertCtrl,
-              label: AppStrings.lingkarPerutLabel,
-              textInputAction: TextInputAction.done),
-        ]));
+            controller: widget.lpertCtrl,
+            label: AppStrings.lingkarPerutLabel,
+            textInputAction: TextInputAction.done,
+          ),
+        ],
+      ),
+    );
   }
 }
 
