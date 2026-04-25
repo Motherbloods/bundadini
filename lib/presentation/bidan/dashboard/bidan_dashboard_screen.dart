@@ -1,3 +1,4 @@
+import 'package:bundadini/data/models/examination_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -77,7 +78,10 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
       // Hitung unique patient dengan status bahaya
       final risikoPatients = <String>{};
       for (final exam in thisMonthExams) {
-        if (exam.statusIbu == 'Bahaya' || exam.statusJanin == 'Bahaya') {
+        final ibuBahaya = exam.statusIbu == ExaminationStatus.risikoTinggi;
+        final janinBahaya = exam.statusJanin == JaninStatus.djjRendah ||
+            exam.statusJanin == JaninStatus.djjTinggi;
+        if (ibuBahaya || janinBahaya) {
           risikoPatients.add(exam.patientId);
         }
       }
