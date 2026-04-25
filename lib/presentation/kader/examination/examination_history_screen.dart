@@ -105,50 +105,96 @@ class _HistoryCard extends StatelessWidget {
         onTap: () => context.push('/shared/examine/result', extra: exam.id),
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const Icon(Icons.calendar_today_rounded,
-                  size: 15, color: AppColors.textSecond),
-              const SizedBox(width: 6),
-              Text(DateFormatter.toDisplay(exam.tanggal),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15)),
-              const SizedBox(width: 10),
-              Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: AppColors.redPale,
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Text('${exam.usiaKehamilan} minggu',
-                      style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600))),
-              const Spacer(),
-              const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textSecond, size: 20),
-            ]),
-            const SizedBox(height: 6),
-            Text('Kader: ${exam.kaderNama}',
-                style:
-                    const TextStyle(color: AppColors.textSecond, fontSize: 13)),
-            const SizedBox(height: 10),
-            Row(children: [
-              _MiniStat('💓', '${exam.sistolik}/${exam.diastolik}', 'mmHg'),
-              const SizedBox(width: 16),
-              _MiniStat(
-                '⚖️',
-                exam.beratBadan.toStringAsFixed(1),
-                'kg',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 15,
+                    color: AppColors.textSecond,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          DateFormatter.toDisplay(exam.tanggal),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.redPale,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${exam.usiaKehamilan} minggu',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecond,
+                    size: 20,
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              _MiniStat('🫀', '${exam.djj}', 'bpm'),
-              const Spacer(),
-              StatusBadge(status: exam.statusIbu),
-            ]),
-          ]),
+              const SizedBox(height: 6),
+              Text(
+                'Kader: ${exam.kaderNama}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecond,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _MiniStat(
+                    '💓',
+                    '${exam.sistolik}/${exam.diastolik}',
+                    'mmHg',
+                  ),
+                  _MiniStat(
+                    '⚖️',
+                    exam.beratBadan.toStringAsFixed(1),
+                    'kg',
+                  ),
+                  _MiniStat(
+                    '🫀',
+                    '${exam.djj}',
+                    'bpm',
+                  ),
+                  StatusBadge(status: exam.statusIbu),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -473,6 +519,20 @@ class _DjjChart extends StatelessWidget {
                 show: true, color: AppColors.chartGreen.withValues(alpha: 0.1)),
           )
         ],
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => AppColors.primary,
+            getTooltipItems: (spots) => spots
+                .map((s) => LineTooltipItem(
+                      '${s.y.toInt()} bpm',
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
       )),
     );
   }
@@ -535,8 +595,13 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-// Shared chart titles─
 FlTitlesData _titlesData(List<String> xLabels, String yUnit) {
+  final totalLabels = xLabels.length;
+  final maxLabelsToShow = 5;
+  final showEvery = totalLabels > maxLabelsToShow
+      ? (totalLabels / maxLabelsToShow).ceil()
+      : 1;
+
   return FlTitlesData(
     rightTitles: const AxisTitles(
       sideTitles: SideTitles(showTitles: false),
@@ -545,26 +610,52 @@ FlTitlesData _titlesData(List<String> xLabels, String yUnit) {
       sideTitles: SideTitles(showTitles: false),
     ),
     bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-      showTitles: true,
-      reservedSize: 32,
-      getTitlesWidget: (v, meta) {
-        final i = v.toInt();
-        if (i < 0 || i >= xLabels.length) return const SizedBox.shrink();
-        return Padding(
+      sideTitles: SideTitles(
+        showTitles: true,
+        reservedSize: 32,
+        interval: 1,
+        getTitlesWidget: (v, meta) {
+          final i = v.toInt();
+          if (i < 0 || i >= xLabels.length) {
+            return const SizedBox.shrink();
+          }
+
+          final isFirst = i == 0;
+          final isLast = i == totalLabels - 1;
+          final isInterval = i % showEvery == 0;
+          // Skip label yang tidak memenuhi kriteria
+          if (!isFirst && !isLast && !isInterval) {
+            return const SizedBox.shrink();
+          }
+
+          return Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text(xLabels[i],
-                style: const TextStyle(
-                    fontSize: 10, color: AppColors.textSecond)));
-      },
-    )),
+            child: Text(
+              xLabels[i],
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecond,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          );
+        },
+      ),
+    ),
     leftTitles: AxisTitles(
-        sideTitles: SideTitles(
-      showTitles: true,
-      reservedSize: 40,
-      getTitlesWidget: (v, meta) => Text(v.toInt().toString(),
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecond)),
-    )),
+      sideTitles: SideTitles(
+        showTitles: true,
+        reservedSize: 40,
+        getTitlesWidget: (v, meta) => Text(
+          v.toInt().toString(),
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textSecond,
+          ),
+        ),
+      ),
+    ),
   );
 }
 
