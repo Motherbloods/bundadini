@@ -81,7 +81,12 @@ class KonfirmasiDialog extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(labelTidak),
+                child: Center(
+                  child: Text(
+                    labelTidak,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -96,7 +101,12 @@ class KonfirmasiDialog extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(labelYa),
+                child: Center(
+                  child: Text(
+                    labelYa,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ),
           ],
