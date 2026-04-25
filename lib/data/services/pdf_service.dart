@@ -1,3 +1,4 @@
+import 'package:bundadini/core/utils/date_formatter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -188,14 +189,16 @@ class PdfService {
     required String patientFotoUrl,
     required String namaPuskesmas,
     required String bidanNama,
+    String taksiranPersalinan = '-',
   }) async {
     final doc = pw.Document();
     final font = await PdfGoogleFonts.nunitoRegular();
     final fontBold = await PdfGoogleFonts.nunitoBold();
 
     // Hitung Taksiran Persalinan dari HPHT (data Firestore, bukan hardcode)
+    print('HPHT masuk ke PDF: $patientHpht');
     final tpStr = _hitungTpFromString(patientHpht);
-
+    print('TP hasil hitung di PDF: $tpStr');
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
@@ -278,7 +281,7 @@ class PdfService {
     String alamat,
     String noHp,
     String hpht,
-    String tp, // Taksiran Persalinan — dihitung dari HPHT Firestore
+    String tp,
     pw.Font font,
     pw.Font fontBold,
   ) {
@@ -514,18 +517,11 @@ class PdfService {
 
   /// Hitung TP dari string format dd/MM/yyyy (dari DateFormatter.toDisplay).
   static String _hitungTpFromString(String hphtStr) {
-    try {
-      final parts = hphtStr.split('/');
-      if (parts.length != 3) return '-';
-      final hpht = DateTime(
-        int.parse(parts[2]),
-        int.parse(parts[1]),
-        int.parse(parts[0]),
-      );
-      return _hitungTp(hpht);
-    } catch (_) {
-      return '-';
-    }
+    final hpht = DateFormatter.parseFlexible(hphtStr);
+
+    if (hpht == null) return '-';
+
+    return _fmt(DateFormatter.taksiran(hpht));
   }
 
   static String _tensiStatus(int sis, int dia) {

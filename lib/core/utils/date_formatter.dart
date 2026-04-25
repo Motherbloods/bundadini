@@ -41,4 +41,20 @@ class DateFormatter {
     final diff = DateTime.now().difference(hpht).inDays;
     return (diff / 7).floor();
   }
+
+  static DateTime? parseFlexible(String value) {
+    try {
+      return DateFormat('dd/MM/yyyy').parseStrict(value);
+    } catch (_) {}
+
+    try {
+      return DateFormat('dd MMM yyyy', 'id_ID').parseStrict(value);
+    } catch (_) {}
+
+    try {
+      return DateFormat('yyyy-MM-dd').parseStrict(value);
+    } catch (_) {}
+
+    return null;
+  }
 }
