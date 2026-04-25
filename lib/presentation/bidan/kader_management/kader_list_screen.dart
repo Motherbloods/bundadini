@@ -43,9 +43,26 @@ class _KaderListScreenState extends State<KaderListScreen> {
             'Nonaktifkan ${kader.nama}? Kader tidak bisa login setelah ini.',
         labelYa: 'Nonaktifkan',
         isDangerous: true);
+
     if (ok) {
-      await _repo.deactivateKader(kader.id);
-      await _load();
+      try {
+        await _repo.deactivateKader(kader.id);
+        await _load();
+
+        if (mounted) {
+          _showSnackbar(
+            '${kader.nama} berhasil dinonaktifkan',
+            isError: false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          _showSnackbar(
+            'Gagal menonaktifkan kader: $e',
+            isError: true,
+          );
+        }
+      }
     }
   }
 
@@ -56,10 +73,56 @@ class _KaderListScreenState extends State<KaderListScreen> {
             'Aktifkan kembali ${kader.nama}? Kader dapat login kembali setelah ini.',
         labelYa: 'Aktifkan',
         isDangerous: false);
+
     if (ok) {
-      await _repo.activateKader(kader.id);
-      await _load();
+      try {
+        await _repo.activateKader(kader.id);
+        await _load();
+
+        if (mounted) {
+          _showSnackbar(
+            '${kader.nama} berhasil diaktifkan kembali',
+            isError: false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          _showSnackbar(
+            'Gagal mengaktifkan kader: $e',
+            isError: true,
+          );
+        }
+      }
     }
+  }
+
+  void _showSnackbar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? AppColors.danger : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: Duration(seconds: isError ? 3 : 2),
+      ),
+    );
   }
 
   @override
@@ -172,39 +235,48 @@ class _KaderCard extends StatelessWidget {
                     style: const TextStyle(
                         color: AppColors.textSecond, fontSize: 12)),
               ])),
-          if (kader.isActive)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded,
-                  color: AppColors.textSecond),
+
+          SizedBox(
+            width: 40,
+            child: PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: AppColors.textSecond,
+              ),
               onSelected: (v) {
                 if (v == 'deactivate') onDeactivate();
-                if (v == 'activate') onActivate(); // ← tambah ini
+                if (v == 'activate') onActivate();
               },
               itemBuilder: (_) => [
                 if (kader.isActive)
                   const PopupMenuItem(
                     value: 'deactivate',
-                    child: Row(children: [
-                      Icon(Icons.person_off_rounded,
-                          color: AppColors.danger, size: 20),
-                      SizedBox(width: 8),
-                      Text('Nonaktifkan',
-                          style: TextStyle(color: AppColors.danger)),
-                    ]),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_off_rounded,
+                            color: AppColors.danger, size: 20),
+                        SizedBox(width: 8),
+                        Text('Nonaktifkan',
+                            style: TextStyle(color: AppColors.danger)),
+                      ],
+                    ),
                   ),
                 if (!kader.isActive)
                   const PopupMenuItem(
                     value: 'activate',
-                    child: Row(children: [
-                      Icon(Icons.person_rounded,
-                          color: AppColors.success, size: 20),
-                      SizedBox(width: 8),
-                      Text('Aktifkan Kembali',
-                          style: TextStyle(color: AppColors.success)),
-                    ]),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_rounded,
+                            color: AppColors.success, size: 20),
+                        SizedBox(width: 8),
+                        Text('Aktifkan Kembali',
+                            style: TextStyle(color: AppColors.success)),
+                      ],
+                    ),
                   ),
               ],
             ),
+          )
         ]),
       ),
     );
