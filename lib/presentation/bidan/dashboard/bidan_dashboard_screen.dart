@@ -7,6 +7,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../data/repositories/examination_repository.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../domain/providers/auth_provider.dart';
 import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
@@ -20,6 +22,15 @@ class BidanDashboardScreen extends StatefulWidget {
 }
 
 class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
+  final _examRepo = ExaminationRepository();
+  final _authRepo = AuthRepository();
+
+  int _pemeriksaanBulanIni = 0;
+  int _ibuRisikoTinggi = 0;
+  int _kaderAktif = 0;
+  Map<int, int> _chartData = {}; // bulan -> jumlah pemeriksaan
+  bool _loadingStats = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +39,56 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
 
   Future<void> _load() async {
     await context.read<PatientProvider>().loadAll();
+    await _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    setState(() => _loadingStats = true);
+
+    try {
+      final auth = context.read<AuthProvider>();
+      final bidanId = auth.currentUser?.id ?? '';
+
+      // 1. Pemeriksaan bulan ini
+      _pemeriksaanBulanIni = await _examRepo.countThisMonth();
+
+      // 2. Kader aktif
+      final kaders = await _authRepo.fetchKaders(bidanId);
+      _kaderAktif = kaders.where((k) => k.isActive).length;
+
+      // 3. Data chart 6 bulan terakhir
+      final now = DateTime.now();
+      _chartData = {};
+
+      for (int i = 5; i >= 0; i--) {
+        final month = DateTime(now.year, now.month - i, 1);
+        final nextMonth = DateTime(now.year, now.month - i + 1, 1);
+
+        final exams = await _examRepo.fetchByDateRange(month, nextMonth);
+        _chartData[now.month - i] = exams.length;
+      }
+
+      // 4. Ibu risiko tinggi (dari pemeriksaan bulan ini)
+      final thisMonthStart = DateTime(now.year, now.month, 1);
+      final thisMonthEnd = DateTime(now.year, now.month + 1, 1);
+      final thisMonthExams =
+          await _examRepo.fetchByDateRange(thisMonthStart, thisMonthEnd);
+
+      // Hitung unique patient dengan status bahaya
+      final risikoPatients = <String>{};
+      for (final exam in thisMonthExams) {
+        if (exam.statusIbu == 'Bahaya' || exam.statusJanin == 'Bahaya') {
+          risikoPatients.add(exam.patientId);
+        }
+      }
+      _ibuRisikoTinggi = risikoPatients.length;
+    } catch (e) {
+      debugPrint('Error loading stats: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _loadingStats = false);
+      }
+    }
   }
 
   Future<void> _logout() async {
@@ -42,6 +103,40 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
     }
   }
 
+  void _showSnackbar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? AppColors.danger : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: Duration(seconds: isError ? 3 : 2),
+        margin: const EdgeInsets.only(
+          bottom: 20,
+          left: 16,
+          right: 16,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -49,10 +144,6 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
     final nama = auth.currentUser?.nama ?? 'Bidan';
 
     final allPatients = patProv.patients;
-    final risikoTinggi = allPatients.where((p) {
-      // We'd need examination data to know this; use a rough count for now
-      return false; // akan diisi dari ExaminationProvider jika ada realtime stream
-    }).length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -115,19 +206,40 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
             // Stats cards
             const SectionHeader(title: 'Ringkasan Data'),
             const SizedBox(height: 12),
-            _StatsGrid(totalIbu: allPatients.length),
+            _loadingStats
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
+                    ),
+                  )
+                : _StatsGrid(
+                    totalIbu: allPatients.length,
+                    pemeriksaanBulanIni: _pemeriksaanBulanIni,
+                    ibuRisikoTinggi: _ibuRisikoTinggi,
+                    kaderAktif: _kaderAktif,
+                  ),
             const SizedBox(height: 16),
 
             // Bar Chart 6 bulan
             const SectionHeader(title: AppStrings.statistik6Bulan),
             const SizedBox(height: 12),
-            const _BarChartCard(),
+            _loadingStats
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
+                    ),
+                  )
+                : _BarChartCard(chartData: _chartData),
             const SizedBox(height: 16),
 
             // Menu Grid
             const SectionHeader(title: 'Menu'),
             const SizedBox(height: 12),
-            _MenuGrid(),
+            _MenuGrid(showSnackbar: _showSnackbar),
             const SizedBox(height: 24),
           ]),
         ),
@@ -136,10 +248,19 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
   }
 }
 
-// Stats Grid─
+// Stats Grid
 class _StatsGrid extends StatelessWidget {
   final int totalIbu;
-  const _StatsGrid({required this.totalIbu});
+  final int pemeriksaanBulanIni;
+  final int ibuRisikoTinggi;
+  final int kaderAktif;
+
+  const _StatsGrid({
+    required this.totalIbu,
+    required this.pemeriksaanBulanIni,
+    required this.ibuRisikoTinggi,
+    required this.kaderAktif,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -153,11 +274,11 @@ class _StatsGrid extends StatelessWidget {
       children: [
         _StatCard(AppStrings.totalIbu, '$totalIbu',
             Icons.pregnant_woman_rounded, AppColors.primary),
-        const _StatCard(AppStrings.pemeriksaanBulanIni, '-',
+        _StatCard(AppStrings.pemeriksaanBulanIni, '$pemeriksaanBulanIni',
             Icons.assignment_rounded, AppColors.info),
-        const _StatCard(AppStrings.ibuRisikoTinggi, '-',
+        _StatCard(AppStrings.ibuRisikoTinggi, '$ibuRisikoTinggi',
             Icons.warning_amber_rounded, AppColors.danger),
-        const _StatCard(AppStrings.kaderAktif, '-', Icons.people_rounded,
+        _StatCard(AppStrings.kaderAktif, '$kaderAktif', Icons.people_rounded,
             AppColors.success),
       ],
     );
@@ -207,7 +328,9 @@ class _StatCard extends StatelessWidget {
 
 // Bar Chart 6 bulan
 class _BarChartCard extends StatelessWidget {
-  const _BarChartCard();
+  final Map<int, int> chartData;
+
+  const _BarChartCard({required this.chartData});
 
   List<String> _getLastSixMonths() {
     final now = DateTime.now();
@@ -220,8 +343,15 @@ class _BarChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final months = _getLastSixMonths();
-    // Placeholder data — dalam produksi, ambil dari Firestore
-    final data = [4.0, 7.0, 5.0, 9.0, 6.0, 11.0];
+    final now = DateTime.now();
+
+    // Konversi chartData ke list dengan urutan yang benar
+    final data = List.generate(6, (i) {
+      final monthKey = now.month - (5 - i);
+      return (chartData[monthKey] ?? 0).toDouble();
+    });
+
+    final maxValue = data.isEmpty ? 10.0 : data.reduce((a, b) => a > b ? a : b);
 
     return Card(
       child: Padding(
@@ -241,82 +371,95 @@ class _BarChartCard extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             height: 180,
-            child: BarChart(BarChartData(
-              alignment: BarChartAlignment.spaceAround,
-              maxY: (data.reduce((a, b) => a > b ? a : b) + 3),
-              barGroups: List.generate(
-                  6,
-                  (i) => BarChartGroupData(
-                        x: i,
-                        barRods: [
-                          BarChartRodData(
-                            toY: data[i],
-                            width: 20,
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(6)),
-                            gradient: const LinearGradient(
-                                colors: [
-                                  AppColors.primaryLight,
-                                  AppColors.primary
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter),
-                          )
-                        ],
-                      )),
-              titlesData: FlTitlesData(
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28,
-                        getTitlesWidget: (v, _) => Text('${v.toInt()}',
-                            style: const TextStyle(
-                                fontSize: 11, color: AppColors.textSecond)))),
-                bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28,
-                        getTitlesWidget: (v, _) {
-                          final idx = v.toInt();
-                          if (idx < 0 || idx >= months.length) {
-                            return const SizedBox.shrink();
-                          }
-                          final parts = months[idx].split(' ');
-                          return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(parts[0],
-                                    style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.textSecond)),
-                              ]);
-                        })),
-              ),
-              gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) =>
-                      const FlLine(color: AppColors.divider, strokeWidth: 1)),
-              borderData: FlBorderData(show: false),
-              barTouchData: BarTouchData(
-                touchTooltipData: BarTouchTooltipData(
-                  getTooltipColor: (group) => AppColors.primary,
-                  getTooltipItem: (group, _, rod, __) => BarTooltipItem(
-                    '${rod.toY.toInt()} pemeriksaan',
-                    const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+            child: data.every((e) => e == 0)
+                ? const Center(
+                    child: Text(
+                      'Belum ada data pemeriksaan',
+                      style: TextStyle(
+                        color: AppColors.textSecond,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            )),
+                  )
+                : BarChart(BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxValue + 3,
+                    barGroups: List.generate(
+                        6,
+                        (i) => BarChartGroupData(
+                              x: i,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: data[i] == 0
+                                      ? 0.1
+                                      : data[i], // Minimal 0.1 untuk visibility
+                                  width: 20,
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(6)),
+                                  gradient: const LinearGradient(
+                                      colors: [
+                                        AppColors.primaryLight,
+                                        AppColors.primary
+                                      ],
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter),
+                                )
+                              ],
+                            )),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28,
+                              getTitlesWidget: (v, _) => Text('${v.toInt()}',
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecond)))),
+                      bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28,
+                              getTitlesWidget: (v, _) {
+                                final idx = v.toInt();
+                                if (idx < 0 || idx >= months.length) {
+                                  return const SizedBox.shrink();
+                                }
+                                final parts = months[idx].split(' ');
+                                return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(parts[0],
+                                          style: const TextStyle(
+                                              fontSize: 10,
+                                              color: AppColors.textSecond)),
+                                    ]);
+                              })),
+                    ),
+                    gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (_) => const FlLine(
+                            color: AppColors.divider, strokeWidth: 1)),
+                    borderData: FlBorderData(show: false),
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (group) => AppColors.primary,
+                        getTooltipItem: (group, _, rod, __) => BarTooltipItem(
+                          '${rod.toY.toInt()} pemeriksaan',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )),
           ),
         ]),
       ),
@@ -326,6 +469,10 @@ class _BarChartCard extends StatelessWidget {
 
 // Menu Grid
 class _MenuGrid extends StatelessWidget {
+  final Function(String, {required bool isError}) showSnackbar;
+
+  const _MenuGrid({required this.showSnackbar});
+
   @override
   Widget build(BuildContext context) {
     final menus = [
@@ -386,9 +533,35 @@ class _MenuGrid extends StatelessWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
-                  await auth
-                      .updateProfile({'namaPuskesmas': puskCtrl.text.trim()});
-                  if (ctx.mounted) Navigator.pop(ctx);
+                  final newName = puskCtrl.text.trim();
+
+                  if (newName.isEmpty) {
+                    showSnackbar(
+                      'Nama puskesmas tidak boleh kosong',
+                      isError: true,
+                    );
+                    return;
+                  }
+
+                  try {
+                    await auth.updateProfile({'namaPuskesmas': newName});
+
+                    if (ctx.mounted) Navigator.pop(ctx);
+
+                    if (context.mounted) {
+                      showSnackbar(
+                        'Profil berhasil diperbarui',
+                        isError: false,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      showSnackbar(
+                        'Gagal memperbarui profil: $e',
+                        isError: true,
+                      );
+                    }
+                  }
                 },
                 child: const Text('Simpan'),
               ),
