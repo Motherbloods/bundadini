@@ -11,9 +11,14 @@ import 'domain/providers/rules_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await initializeDateFormatting('id_ID', null);
 
   runApp(
@@ -39,6 +44,7 @@ class BundaDiniApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
     );
   }
 }

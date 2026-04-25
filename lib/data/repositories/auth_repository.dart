@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/user_model.dart';
 
@@ -40,31 +41,62 @@ class AuthRepository {
     }
   }
 
-  /// Bidan mendaftarkan kader baru
+  /// Bidan mendaftarkan kader baru.
+  ///
+  /// Menggunakan Secondary Firebase App agar sesi bidan TIDAK terganti
+  /// saat [createUserWithEmailAndPassword] dipanggil.
+  /// Firebase secara default akan auto sign-in ke akun yang baru dibuat —
+  /// secondary app mengisolasi proses ini di instance terpisah.
   Future<void> registerKader({
     required String email,
     required String password,
     required String nama,
     required String createdBy,
   }) async {
-    // Buat akun Firebase Auth
-    final cred = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    final uid = cred.user!.uid;
+    // Nama unik untuk secondary app — pakai timestamp agar tidak konflik
+    // jika method ini dipanggil lebih dari sekali secara bersamaan.
+    final appName = 'kader_register_${DateTime.now().millisecondsSinceEpoch}';
 
-    // Simpan data ke Firestore
-    final kader = UserModel(
-      id: uid,
-      email: email.trim(),
-      nama: nama.trim(),
-      role: UserRole.kader,
-      createdBy: createdBy,
-      createdAt: DateTime.now(),
-      isActive: true,
-    );
-    await _db.collection('users').doc(uid).set(kader.toJson());
+    FirebaseApp? secondaryApp;
+    try {
+      // 1. Inisialisasi secondary Firebase App dengan opsi yang sama
+      //    dengan app utama — tidak perlu file konfigurasi tambahan.
+      secondaryApp = await Firebase.initializeApp(
+        name: appName,
+        options: Firebase.app().options, // pakai opsi dari app utama
+      );
+
+      // 2. Buat instance Auth yang terikat ke secondary app.
+      //    Sesi bidan di instance utama (_auth) TIDAK terpengaruh.
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+      // 3. Buat akun kader di secondary Auth — tidak mengganti sesi bidan.
+      final cred = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final uid = cred.user!.uid;
+
+      // 4. Langsung sign-out dari secondary app —
+      //    UID sudah didapat, sesi secondary tidak diperlukan lagi.
+      await secondaryAuth.signOut();
+
+      // 5. Simpan data kader ke Firestore (pakai _db utama, tidak masalah).
+      final kader = UserModel(
+        id: uid,
+        email: email.trim(),
+        nama: nama.trim(),
+        role: UserRole.kader,
+        createdBy: createdBy,
+        createdAt: DateTime.now(),
+        isActive: true,
+      );
+      await _db.collection('users').doc(uid).set(kader.toJson());
+    } finally {
+      // 6. Hapus secondary app dari memory — wajib agar tidak leak.
+      //    Dilakukan di finally sehingga tetap bersih meski ada error.
+      await secondaryApp?.delete();
+    }
   }
 
   /// Ambil semua kader milik bidan ini
