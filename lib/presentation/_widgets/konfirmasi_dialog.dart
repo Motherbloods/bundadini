@@ -28,6 +28,7 @@ class KonfirmasiDialog extends StatelessWidget {
   }) async {
     final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (_) => KonfirmasiDialog(
         title: title,
         message: message,
@@ -36,28 +37,69 @@ class KonfirmasiDialog extends StatelessWidget {
         isDangerous: isDangerous,
       ),
     );
+
     return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(title, style: Theme.of(context).textTheme.titleLarge),
-      content: Text(message, style: Theme.of(context).textTheme.bodyLarge),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 24,
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(labelTidak),
+      title: Text(
+        title,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
         ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: isDangerous
-              ? ElevatedButton.styleFrom(backgroundColor: AppColors.danger)
-              : null,
-          child: Text(labelYa),
+      ),
+      content: Text(
+        message,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          height: 1.5,
+          color: Colors.black87,
+        ),
+      ),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(labelTidak),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDangerous ? AppColors.danger : null,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(labelYa),
+              ),
+            ),
+          ],
         ),
       ],
     );
