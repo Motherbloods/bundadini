@@ -108,32 +108,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
         ),
       ),
       body: _BiodataTab(patient: patient),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: patient.status == StatusPasien.selesai
-              ? Container(/* label sudah melahirkan — tidak berubah */)
-              : Column(mainAxisSize: MainAxisSize.min, children: [
-                  // ← TAMBAH tombol riwayat
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.history_rounded),
-                    label: const Text('Riwayat & Grafik Pemeriksaan'),
-                    onPressed: () =>
-                        context.push('/kader/patients/${patient.id}/history'),
-                    style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48)),
-                  ),
-                  const SizedBox(height: 10),
-                  // Tombol Periksa Sekarang tetap ada
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.medical_services_rounded),
-                    label: const Text(AppStrings.periksaSekarang),
-                    onPressed: () =>
-                        context.push('/kader/patients/${patient.id}/examine'),
-                  ),
-                ]),
-        ),
-      ),
     );
   }
 }
@@ -146,7 +120,12 @@ class _BiodataTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.of(context).padding.bottom,
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Foto + nama
         Center(
@@ -208,7 +187,76 @@ class _BiodataTab extends StatelessWidget {
           _InfoItem('Usia Kehamilan Saat Ini',
               '${DateFormatter.usiaKehamilanMinggu(patient.hpht)} minggu'),
         ]),
-        const SizedBox(height: 80),
+
+        const SizedBox(height: 24),
+
+        if (patient.status == StatusPasien.selesai)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.success.withValues(alpha: 0.3),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 24,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '✨ Pasien sudah melahirkan',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Tombol Riwayat & Grafik
+              OutlinedButton.icon(
+                icon: const Icon(Icons.history_rounded),
+                label: const Text('Riwayat & Grafik Pemeriksaan'),
+                onPressed: () =>
+                    context.push('/kader/patients/${patient.id}/history'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  side: const BorderSide(color: AppColors.primary),
+                  foregroundColor: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Tombol Periksa Sekarang
+              ElevatedButton.icon(
+                icon: const Icon(Icons.medical_services_rounded),
+                label: const Text(AppStrings.periksaSekarang),
+                onPressed: () =>
+                    context.push('/kader/patients/${patient.id}/examine'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+
+        // Spacing di bawah tombol
+        const SizedBox(height: 24),
       ]),
     );
   }
