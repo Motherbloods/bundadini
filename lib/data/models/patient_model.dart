@@ -22,6 +22,7 @@ enum StatusPasien { aktif, pindah, selesai }
 
 extension StatusPasienExt on StatusPasien {
   String get value => name;
+
   String get label {
     switch (this) {
       case StatusPasien.aktif:
@@ -33,8 +34,10 @@ extension StatusPasienExt on StatusPasien {
     }
   }
 
-  static StatusPasien fromString(String s) => StatusPasien.values
-      .firstWhere((e) => e.name == s, orElse: () => StatusPasien.aktif);
+  static StatusPasien fromString(String s) => StatusPasien.values.firstWhere(
+        (e) => e.name == s,
+        orElse: () => StatusPasien.aktif,
+      );
 }
 
 class PatientModel {
@@ -49,6 +52,7 @@ class PatientModel {
   final GolonganDarah golonganDarah;
   final String fotoUrl;
   final String kaderId;
+  final String bidanId;
   final StatusPasien status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -65,6 +69,7 @@ class PatientModel {
     required this.golonganDarah,
     required this.fotoUrl,
     required this.kaderId,
+    required this.bidanId,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -85,6 +90,7 @@ class PatientModel {
           GolonganDarahExt.fromString(json['golonganDarah'] as String? ?? 'O'),
       fotoUrl: json['fotoUrl'] as String? ?? '',
       kaderId: json['kaderId'] as String? ?? '',
+      bidanId: json['bidanId'] as String? ?? '',
       status: StatusPasienExt.fromString(json['status'] as String? ?? 'aktif'),
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (json['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -103,6 +109,7 @@ class PatientModel {
         'golonganDarah': golonganDarah.value,
         'fotoUrl': fotoUrl,
         'kaderId': kaderId,
+        'bidanId': bidanId,
         'status': status.value,
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt': Timestamp.fromDate(updatedAt),
@@ -120,6 +127,7 @@ class PatientModel {
     GolonganDarah? golonganDarah,
     String? fotoUrl,
     String? kaderId,
+    String? bidanId,
     StatusPasien? status,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -136,6 +144,7 @@ class PatientModel {
       golonganDarah: golonganDarah ?? this.golonganDarah,
       fotoUrl: fotoUrl ?? this.fotoUrl,
       kaderId: kaderId ?? this.kaderId,
+      bidanId: bidanId ?? this.bidanId,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

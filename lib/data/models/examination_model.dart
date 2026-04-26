@@ -45,6 +45,7 @@ class ExaminationModel {
   final String patientId;
   final String kaderId;
   final String kaderNama;
+  final String bidanId;
   final DateTime tanggal;
   final int usiaKehamilan; // dalam minggu
 
@@ -78,6 +79,7 @@ class ExaminationModel {
     required this.patientId,
     required this.kaderId,
     required this.kaderNama,
+    required this.bidanId,
     required this.tanggal,
     required this.usiaKehamilan,
     required this.sistolik,
@@ -107,6 +109,7 @@ class ExaminationModel {
       patientId: json['patientId'] as String? ?? '',
       kaderId: json['kaderId'] as String? ?? '',
       kaderNama: json['kaderNama'] as String? ?? '',
+      bidanId: json['bidanId'] as String? ?? '',
       tanggal: (json['tanggal'] as Timestamp?)?.toDate() ?? DateTime.now(),
       usiaKehamilan: (json['usiaKehamilan'] as num?)?.toInt() ?? 0,
       sistolik: (json['sistolik'] as num?)?.toInt() ?? 0,
@@ -133,6 +136,7 @@ class ExaminationModel {
         'patientId': patientId,
         'kaderId': kaderId,
         'kaderNama': kaderNama,
+        'bidanId': bidanId,
         'tanggal': Timestamp.fromDate(tanggal),
         'usiaKehamilan': usiaKehamilan,
         'sistolik': sistolik,
@@ -158,6 +162,7 @@ class ExaminationModel {
     String? patientId,
     String? kaderId,
     String? kaderNama,
+    String? bidanId,
     DateTime? tanggal,
     int? usiaKehamilan,
     int? sistolik,
@@ -182,6 +187,7 @@ class ExaminationModel {
       patientId: patientId ?? this.patientId,
       kaderId: kaderId ?? this.kaderId,
       kaderNama: kaderNama ?? this.kaderNama,
+      bidanId: bidanId ?? this.bidanId,
       tanggal: tanggal ?? this.tanggal,
       usiaKehamilan: usiaKehamilan ?? this.usiaKehamilan,
       sistolik: sistolik ?? this.sistolik,
