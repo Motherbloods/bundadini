@@ -219,6 +219,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       golonganDarah: _golDarah,
       fotoUrl: '',
       kaderId: auth.currentUser!.id,
+      bidanId: '',
       status: StatusPasien.aktif,
       createdAt: now,
       updatedAt: now,

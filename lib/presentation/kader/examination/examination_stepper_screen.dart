@@ -165,6 +165,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           patientId: widget.patientId,
           kaderId: auth.currentUser!.id,
           kaderNama: auth.currentUser!.nama,
+          bidanId: auth.currentUser!.createdBy,
           usiaKehamilan: int.parse(_usiaCtrl.text.trim()),
           sistolik: int.parse(_sistolikCtrl.text.trim()),
           diastolik: int.parse(_diastolikCtrl.text.trim()),

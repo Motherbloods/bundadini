@@ -1,3 +1,4 @@
+import 'package:bundadini/domain/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -25,8 +26,10 @@ class _AllPatientsScreenState extends State<AllPatientsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => context.read<PatientProvider>().loadAll());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bidanId = context.read<AuthProvider>().currentUser?.id ?? '';
+      context.read<PatientProvider>().loadAll(bidanId);
+    });
   }
 
   @override
@@ -118,8 +121,11 @@ class _AllPatientsScreenState extends State<AllPatientsScreen> {
                           : 'Tidak ada hasil untuk "$_query"')
                   : RefreshIndicator(
                       color: AppColors.primary,
-                      onRefresh: () async =>
-                          context.read<PatientProvider>().loadAll(),
+                      onRefresh: () async {
+                        final bidanId =
+                            context.read<AuthProvider>().currentUser?.id ?? '';
+                        context.read<PatientProvider>().loadAll(bidanId);
+                      },
                       child: ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: list.length,

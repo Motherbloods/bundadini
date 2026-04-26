@@ -48,8 +48,10 @@ class _ExportScreenState extends State<ExportScreen> {
       _statusMsg = 'Mengambil data...';
     });
     try {
-      final exams = await _examRepo.fetchByDateRange(_from, _to);
-      final patients = await _patientRepo.fetchAll();
+      final auth = context.read<AuthProvider>();
+      final bidanId = auth.currentUser?.id ?? '';
+      final exams = await _examRepo.fetchByDateRange(_from, _to, bidanId);
+      final patients = await _patientRepo.fetchAll(bidanId);
       setState(() => _statusMsg = 'Membuat file Excel...');
       await ExcelService.exportAndShare(
           examinations: exams, patients: patients, from: _from, to: _to);
@@ -72,7 +74,9 @@ class _ExportScreenState extends State<ExportScreen> {
       _statusMsg = 'Mengambil data...';
     });
     try {
-      final exams = await _examRepo.fetchByDateRange(_from, _to);
+      final auth = context.read<AuthProvider>();
+      final bidanId = auth.currentUser?.id ?? '';
+      final exams = await _examRepo.fetchByDateRange(_from, _to, bidanId);
 
       if (exams.isEmpty) {
         if (mounted) _showError('Tidak ada data di rentang tanggal ini.');
@@ -89,7 +93,6 @@ class _ExportScreenState extends State<ExportScreen> {
 
       setState(() => _statusMsg = 'Membuat PDF...');
 
-      final auth = context.read<AuthProvider>();
       final namaPuskesmas =
           auth.currentUser?.namaPuskesmas ?? AppStrings.defaultPuskesmas;
       final bidanNama = auth.currentUser?.nama ?? '';
