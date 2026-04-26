@@ -13,7 +13,7 @@ class PatientRepository {
     final snap = await _db
         .collection('patients')
         .where('kaderId', isEqualTo: kaderId)
-        .where('status', isEqualTo: 'aktif')
+        // .where('status', isEqualTo: 'aktif')
         .orderBy('nama')
         .get();
     return snap.docs

@@ -68,7 +68,14 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
     final auth = context.watch<AuthProvider>();
     final patient = context.watch<PatientProvider>();
     final nama = auth.currentUser?.nama ?? 'Kader';
-    final list = _query.isEmpty ? patient.patients : patient.search(_query);
+
+    // Pisahkan pasien aktif dan selesai
+    final listAktif = _query.isEmpty
+        ? patient.patients.where((p) => p.status != 'selesai').toList()
+        : patient.search(_query);
+    final listSelesai = _query.isEmpty
+        ? patient.patients.where((p) => p.status == 'selesai').toList()
+        : [];
 
     return GestureDetector(
       onTap: _hideKeyboard,
@@ -107,7 +114,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${patient.patients.length} pasien terdaftar',
+                        '${patient.patients.where((p) => p.status != 'selesai').length} pasien aktif',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 15,
@@ -158,7 +165,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                     ),
                   ),
                 )
-              else if (list.isEmpty)
+              else if (listAktif.isEmpty && listSelesai.isEmpty)
                 SliverFillRemaining(
                   child: EmptyState(
                     icon: Icons.pregnant_woman_rounded,
@@ -170,21 +177,64 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                         : null,
                   ),
                 )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, i) => _PatientCard(patient: list[i]),
-                      childCount: list.length,
+              else ...[
+                // List pasien aktif
+                if (listAktif.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) => _PatientCard(patient: listAktif[i]),
+                        childCount: listAktif.length,
+                      ),
                     ),
                   ),
-                ),
+
+                // Section pasien selesai
+                if (listSelesai.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.child_care_rounded,
+                            color: AppColors.success,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Sudah Melahirkan (${listSelesai.length})',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (ctx, i) => _PatientCard(
+                          patient: listSelesai[i],
+                          isSelesai: true,
+                        ),
+                        childCount: listSelesai.length,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.push(AppRoutes.addPatient),
+          onPressed: () =>
+              context.push(AppRoutes.addPatient).then((_) => _load()),
           icon: const Icon(Icons.add),
           label: const Text(
             'Tambah Pasien',
@@ -198,64 +248,96 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
 
 class _PatientCard extends StatelessWidget {
   final PatientModel patient;
+  final bool isSelesai;
 
-  const _PatientCard({required this.patient});
+  const _PatientCard({
+    required this.patient,
+    this.isSelesai = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/kader/patients/${patient.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: patient.fotoUrl.isNotEmpty
-                    ? Image.network(
-                        patient.fotoUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _avatar(),
-                      )
-                    : _avatar(),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patient.nama,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'NIK: ${patient.nik}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'HPHT: ${DateFormatter.toDisplay(patient.hpht)}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+    return Opacity(
+      opacity: isSelesai ? 0.6 : 1.0,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push('/kader/patients/${patient.id}').then((_) {
+            // reload supaya perubahan status/pemeriksaan baru langsung terlihat
+            context.read<PatientProvider>().loadByKader(
+                  context.read<AuthProvider>().currentUser!.id,
+                );
+          }),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: patient.fotoUrl.isNotEmpty
+                      ? Image.network(
+                          patient.fotoUrl,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _avatar(),
+                        )
+                      : _avatar(),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textSecond,
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        patient.nama,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'NIK: ${patient.nik}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'HPHT: ${DateFormatter.toDisplay(patient.hpht)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelesai)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.successLight,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '🎉 Melahirkan',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                else
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecond,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

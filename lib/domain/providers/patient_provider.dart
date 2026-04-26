@@ -191,4 +191,10 @@ class PatientProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  List<PatientModel> get patientsAktif =>
+      _patients.where((p) => p.status == StatusPasien.aktif).toList();
+
+  List<PatientModel> get patientsSelesai =>
+      _patients.where((p) => p.status == StatusPasien.selesai).toList();
 }
