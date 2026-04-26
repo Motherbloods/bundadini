@@ -19,9 +19,13 @@ void main() async {
 
   FocusManager.instance.primaryFocus?.unfocus();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase Init Error: $e");
+  }
 
   await initializeDateFormatting('id_ID', null);
 
