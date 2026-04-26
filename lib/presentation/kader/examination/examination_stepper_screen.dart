@@ -192,7 +192,11 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       await CetakDialog.show(
         context,
         onCetak: () => context.go(AppRoutes.examinationResult, extra: saved.id),
-        onNanti: () => context.go('/kader/patients/${widget.patientId}'),
+        onNanti: () {
+          // Reload patient detail supaya tombol riwayat & status ter-update
+          context.read<ExaminationProvider>().loadHistory(widget.patientId);
+          context.pop();
+        },
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

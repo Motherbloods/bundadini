@@ -291,7 +291,10 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
             // Menu Grid
             const SectionHeader(title: 'Menu'),
             const SizedBox(height: 12),
-            _MenuGrid(showSnackbar: _showSnackbar),
+            _MenuGrid(
+              showSnackbar: _showSnackbar,
+              onRefresh: _load,
+            ),
             const SizedBox(height: 24),
           ]),
         ),
@@ -522,18 +525,31 @@ class _BarChartCard extends StatelessWidget {
 // Menu Grid
 class _MenuGrid extends StatelessWidget {
   final Function(String, {required bool isError}) showSnackbar;
+  final VoidCallback onRefresh;
 
-  const _MenuGrid({required this.showSnackbar});
+  const _MenuGrid({
+    required this.showSnackbar,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     final menus = [
-      _MenuItem(AppStrings.kelolaKader, Icons.people_alt_rounded,
-          AppColors.info, () => context.push(AppRoutes.kaderList)),
-      _MenuItem(AppStrings.semuaPasien, Icons.pregnant_woman_rounded,
-          AppColors.primary, () => context.push(AppRoutes.allPatients)),
-      _MenuItem(AppStrings.exportExcel, Icons.table_chart_rounded,
-          AppColors.success, () => context.push(AppRoutes.exportScreen)),
+      _MenuItem(
+          AppStrings.kelolaKader,
+          Icons.people_alt_rounded,
+          AppColors.info,
+          () => context.push(AppRoutes.kaderList).then((_) => onRefresh())),
+      _MenuItem(
+          AppStrings.semuaPasien,
+          Icons.pregnant_woman_rounded,
+          AppColors.primary,
+          () => context.push(AppRoutes.allPatients).then((_) => onRefresh())),
+      _MenuItem(
+          AppStrings.exportExcel,
+          Icons.table_chart_rounded,
+          AppColors.success,
+          () => context.push(AppRoutes.exportScreen).then((_) => onRefresh())),
       _MenuItem(AppStrings.profilBidan, Icons.person_rounded, AppColors.warning,
           () => _showEditProfil(context)),
     ];
