@@ -39,8 +39,15 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
   }
 
   Future<void> _load() async {
-    await context.read<PatientProvider>().loadAll();
-    await _loadStats();
+    final bidanId = context.read<AuthProvider>().currentUser?.id ?? '';
+    if (bidanId.isEmpty) return;
+    context.read<PatientProvider>().clear();
+    await Future.wait([
+      context.read<PatientProvider>().loadAll(bidanId).catchError((e) {
+        debugPrint('Error load patients: $e');
+      }),
+      _loadStats(),
+    ]);
   }
 
   Future<void> _loadStats() async {
@@ -50,44 +57,85 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
       final auth = context.read<AuthProvider>();
       final bidanId = auth.currentUser?.id ?? '';
 
+      print('==============================');
+      print('📊 START LOAD STATS');
+      print('👤 bidanId: $bidanId');
+
+      if (bidanId.isEmpty) {
+        print('❌ bidanId kosong, abort load stats');
+        return;
+      }
+
       // 1. Pemeriksaan bulan ini
-      _pemeriksaanBulanIni = await _examRepo.countThisMonth();
+      _pemeriksaanBulanIni = await _examRepo.countThisMonth(bidanId);
+
+      print('🧪 Pemeriksaan bulan ini: $_pemeriksaanBulanIni');
 
       // 2. Kader aktif
       final kaders = await _authRepo.fetchKaders(bidanId);
       _kaderAktif = kaders.where((k) => k.isActive).length;
 
-      // 3. Data chart 6 bulan terakhir
+      print('👩‍⚕️ Total kader: ${kaders.length}');
+      print('✅ Kader aktif: $_kaderAktif');
+
+      // 3. Chart 6 bulan terakhir
       final now = DateTime.now();
       _chartData = {};
+
+      print('📈 Loading chart data...');
 
       for (int i = 5; i >= 0; i--) {
         final month = DateTime(now.year, now.month - i, 1);
         final nextMonth = DateTime(now.year, now.month - i + 1, 1);
 
-        final exams = await _examRepo.fetchByDateRange(month, nextMonth);
+        print('➡️ Month range: $month - $nextMonth');
+
+        final exams = await _examRepo.fetchByDateRange(
+          month,
+          nextMonth,
+          bidanId,
+        );
+
         _chartData[now.month - i] = exams.length;
+
+        print('📊 Month ${month.month}: ${exams.length} exams');
       }
 
-      // 4. Ibu risiko tinggi (dari pemeriksaan bulan ini)
+      // 4. Risiko tinggi
       final thisMonthStart = DateTime(now.year, now.month, 1);
       final thisMonthEnd = DateTime(now.year, now.month + 1, 1);
-      final thisMonthExams =
-          await _examRepo.fetchByDateRange(thisMonthStart, thisMonthEnd);
 
-      // Hitung unique patient dengan status bahaya
+      print('⚠️ Loading risk data...');
+
+      final thisMonthExams = await _examRepo.fetchByDateRange(
+        thisMonthStart,
+        thisMonthEnd,
+        bidanId,
+      );
+
+      print('📦 Total exams this month: ${thisMonthExams.length}');
+
       final risikoPatients = <String>{};
+
       for (final exam in thisMonthExams) {
         final ibuBahaya = exam.statusIbu == ExaminationStatus.risikoTinggi;
+
         final janinBahaya = exam.statusJanin == JaninStatus.djjRendah ||
             exam.statusJanin == JaninStatus.djjTinggi;
+
         if (ibuBahaya || janinBahaya) {
           risikoPatients.add(exam.patientId);
         }
       }
+
       _ibuRisikoTinggi = risikoPatients.length;
-    } catch (e) {
-      debugPrint('Error loading stats: $e');
+
+      print('🚨 Ibu risiko tinggi: $_ibuRisikoTinggi');
+      print('==============================');
+      print('✅ STATS LOADED SUCCESS');
+    } catch (e, stack) {
+      print('❌ ERROR LOAD STATS: $e');
+      print('STACKTRACE: $stack');
     } finally {
       if (mounted) {
         setState(() => _loadingStats = false);

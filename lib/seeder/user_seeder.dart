@@ -9,8 +9,9 @@ class UserSeeder {
 
   /// Jalankan sekali untuk seed data awal
   Future<void> seed() async {
-    await _createBidan();
-    await _createKaders();
+    // await _createBidan();
+    await _createBidanLain();
+    // await _createKaders();
     print("🔥 bidan dan kader berhasil di-seed");
   }
 
@@ -37,6 +38,34 @@ class UserSeeder {
       createdAt: DateTime.now(),
       isActive: true,
       namaPuskesmas: 'Puskesmas Contoh',
+    );
+
+    await _db.collection('users').doc(uid).set(bidan.toJson());
+  }
+
+  Future<void> _createBidanLain() async {
+    const email = 'bidan2@demo.com';
+    const password = 'password123';
+
+    final existing = await _findUserByEmail(email);
+    if (existing != null) return;
+
+    final cred = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final uid = cred.user!.uid;
+
+    final bidan = UserModel(
+      id: uid,
+      email: email,
+      nama: 'Bidan Dua',
+      role: UserRole.bidan,
+      createdBy: '',
+      createdAt: DateTime.now(),
+      isActive: true,
+      namaPuskesmas: 'Puskesmas Contoh 2',
     );
 
     await _db.collection('users').doc(uid).set(bidan.toJson());
