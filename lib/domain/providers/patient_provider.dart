@@ -34,10 +34,10 @@ class PatientProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadAll() async {
+  Future<void> loadAll(String bidanId) async {
     _setLoading(true);
     try {
-      _patients = await _repo.fetchAll();
+      _patients = await _repo.fetchAll(bidanId);
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Gagal memuat data pasien.';
@@ -158,6 +158,14 @@ class PatientProvider extends ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
+  }
+
+  void clear() {
+    _patients = [];
+    _selectedPatient = null;
+    _kaderHistory = [];
+    _errorMessage = null;
+    notifyListeners();
   }
 
   Future<bool> tandaiSelesai(String patientId) async {

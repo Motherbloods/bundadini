@@ -21,8 +21,13 @@ class PatientRepository {
         .toList();
   }
 
-  Future<List<PatientModel>> fetchAll() async {
-    final snap = await _db.collection('patients').orderBy('nama').get();
+  Future<List<PatientModel>> fetchAll(String bidanId) async {
+    final snap = await _db
+        .collection('patients')
+        .where('bidanId', isEqualTo: bidanId)
+        .orderBy('nama')
+        .get();
+
     return snap.docs
         .map((d) => PatientModel.fromJson({...d.data(), 'id': d.id}))
         .toList();
@@ -50,9 +55,13 @@ class PatientRepository {
     final fotoUrl = await _uploadFoto(id, fotoFile);
     final now = DateTime.now();
 
+    final kaderDoc = await _db.collection('users').doc(patient.kaderId).get();
+    final bidanId = kaderDoc.data()?['createdBy'] as String? ?? '';
+
     final newPatient = patient.copyWith(
       id: id,
       fotoUrl: fotoUrl,
+      bidanId: bidanId,
       createdAt: now,
       updatedAt: now,
     );
@@ -87,8 +96,12 @@ class PatientRepository {
     final now = DateTime.now();
     final patRef = _db.collection('patients').doc(patientId);
 
+    final newKaderDoc = await _db.collection('users').doc(newKaderId).get();
+    final newBidanId = newKaderDoc.data()?['createdBy'] as String? ?? '';
+
     batch.update(patRef, {
       'kaderId': newKaderId,
+      'bidanId': newBidanId,
       'status': 'aktif',
       'updatedAt': Timestamp.fromDate(now),
     });
@@ -99,6 +112,7 @@ class PatientRepository {
         .collection('kader_history')
         .where('tanggalSelesai', isNull: true)
         .get();
+
     for (final doc in histSnap.docs) {
       batch.update(doc.reference, {
         'tanggalSelesai': Timestamp.fromDate(now),
@@ -111,12 +125,14 @@ class PatientRepository {
         .doc(patientId)
         .collection('kader_history')
         .doc(_uuid.v4());
+
     final newHist = KaderHistoryModel(
       id: newHistRef.id,
       kaderId: newKaderId,
       kaderNama: newKaderNama,
       tanggalMulai: now,
     );
+
     batch.set(newHistRef, newHist.toJson());
 
     await batch.commit();

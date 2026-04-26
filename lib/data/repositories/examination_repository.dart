@@ -48,29 +48,87 @@ class ExaminationRepository {
 
   /// Semua pemeriksaan dalam range tanggal (untuk export bidan)
   Future<List<ExaminationModel>> fetchByDateRange(
-      DateTime from, DateTime to) async {
-    final snap = await _db
+    DateTime from,
+    DateTime to,
+    String bidanId,
+  ) async {
+    final Query query = _db
         .collection('examinations')
+        .where('bidanId', isEqualTo: bidanId)
         .where('tanggal', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
         .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(to))
-        .orderBy('tanggal', descending: true)
-        .get();
+        .orderBy('tanggal', descending: true);
+
+    final snap = await query.get();
+
     return snap.docs
-        .map((d) => ExaminationModel.fromJson({...d.data(), 'id': d.id}))
+        .map((d) => ExaminationModel.fromJson({
+              ...(d.data() as Map<String, dynamic>),
+              'id': d.id,
+            }))
         .toList();
   }
 
   /// Hitung total pemeriksaan bulan ini
-  Future<int> countThisMonth() async {
+  Future<int> countThisMonth(String bidanId) async {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
-    final snap = await _db
-        .collection('examinations')
-        .where('tanggal', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('tanggal', isLessThan: Timestamp.fromDate(end))
-        .count()
-        .get();
-    return snap.count ?? 0;
+
+    print('==============================');
+    print('🧪 FULL DEBUG EXAMINATIONS');
+    print('👤 bidanId target: $bidanId');
+    print('📅 range: $start - $end');
+
+    try {
+      // 🔥 1. AMBIL SEMUA DATA (NO FILTER)
+      final snap = await _db.collection('examinations').get();
+
+      print('📦 TOTAL RAW DATA: ${snap.docs.length}');
+
+      int matchBidan = 0;
+      int matchDate = 0;
+      int matchAll = 0;
+
+      for (final doc in snap.docs) {
+        final data = doc.data();
+
+        final docBidanId = data['bidanId'];
+        final tanggal = (data['tanggal'] as Timestamp?)?.toDate();
+
+        print('------------------------------');
+        print('🧾 docId: ${doc.id}');
+        print('👤 bidanId doc: $docBidanId');
+        print('📅 tanggal: $tanggal');
+
+        // cek bidanId
+        final isBidanMatch = docBidanId == bidanId;
+
+        // cek tanggal range
+        final isDateMatch = tanggal != null &&
+            !tanggal.isBefore(start) &&
+            tanggal.isBefore(end);
+
+        if (isBidanMatch) matchBidan++;
+        if (isDateMatch) matchDate++;
+        if (isBidanMatch && isDateMatch) matchAll++;
+
+        print('✔ bidan match: $isBidanMatch');
+        print('✔ date match: $isDateMatch');
+      }
+
+      print('==============================');
+      print('📊 SUMMARY DEBUG');
+      print('👤 match bidanId only: $matchBidan');
+      print('📅 match date only: $matchDate');
+      print('🎯 match both (REAL RESULT): $matchAll');
+      print('==============================');
+
+      return matchAll;
+    } catch (e, stack) {
+      print('❌ ERROR DEBUG FETCH: $e');
+      print(stack);
+      return 0;
+    }
   }
 }
