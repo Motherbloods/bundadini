@@ -152,15 +152,19 @@ class ExcelService {
     await file.writeAsBytes(bytes);
 
     //  Share
-    await Share.shareXFiles(
-      [
-        XFile(file.path,
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile(
+            file.path,
             mimeType:
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-      ],
-      subject: 'Rekap Pemeriksaan Bunda Dini — $stamp',
-      text:
-          'Data rekap pemeriksaan ibu hamil\nPeriode: ${DateFormatter.toDisplay(from)} s/d ${DateFormatter.toDisplay(to)}',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ),
+        ],
+        subject: 'Rekap Pemeriksaan Bunda Dini — $stamp',
+        text:
+            'Data rekap pemeriksaan ibu hamil\nPeriode: ${DateFormatter.toDisplay(from)} s/d ${DateFormatter.toDisplay(to)}',
+      ),
     );
   }
 
