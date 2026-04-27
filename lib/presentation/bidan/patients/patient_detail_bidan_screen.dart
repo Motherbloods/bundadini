@@ -32,9 +32,14 @@ class _PatientDetailBidanScreenState extends State<PatientDetailBidanScreen>
     _tab = TabController(length: 2, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<PatientProvider>().loadPatient(widget.patientId);
+      final patientProvider = context.read<PatientProvider>();
+      final examProvider = context.read<ExaminationProvider>();
 
-      context.read<ExaminationProvider>().loadHistory(widget.patientId);
+      await patientProvider.loadPatient(widget.patientId);
+
+      examProvider.loadHistory(widget.patientId);
+
+      if (!mounted) return;
 
       await _fetchKaderNama();
     });

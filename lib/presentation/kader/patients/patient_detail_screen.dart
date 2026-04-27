@@ -6,13 +6,10 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../data/models/examination_model.dart';
 import '../../../data/models/patient_model.dart';
 import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
-import '../../_widgets/empty_state.dart';
 import '../../_widgets/section_header.dart';
-import '../../_widgets/status_badge.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   final String patientId;
@@ -71,7 +68,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
   @override
   Widget build(BuildContext context) {
     final patProv = context.watch<PatientProvider>();
-    final examProv = context.watch<ExaminationProvider>();
     final patient = patProv.selectedPatient;
 
     if (patProv.isLoading || patient == null) {

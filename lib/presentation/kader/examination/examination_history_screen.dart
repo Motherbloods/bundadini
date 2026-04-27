@@ -597,7 +597,7 @@ class _LegendDot extends StatelessWidget {
 
 FlTitlesData _titlesData(List<String> xLabels, String yUnit) {
   final totalLabels = xLabels.length;
-  final maxLabelsToShow = 5;
+  const maxLabelsToShow = 5;
   final showEvery = totalLabels > maxLabelsToShow
       ? (totalLabels / maxLabelsToShow).ceil()
       : 1;

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/rule_engine.dart';
 import '../../../core/utils/validators.dart';
 import '../../../domain/providers/auth_provider.dart';
@@ -26,17 +27,14 @@ class ExaminationStepperScreen extends StatefulWidget {
 }
 
 class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
-  int _step = 0; // 0=usia, 1=tensi, 2=antropometri, 3=djj
-  bool _isPasienBaru = false; // start from step 0 for new, 1 for existing
+  // Step 0=tensi, 1=antropometri, 2=djj
+  int _step = 0;
 
-  // Step 1 — usia kehamilan
-  final _usiaCtrl = TextEditingController();
-
-  // Step 2 — tensi
+  // Step 1 — tensi
   final _sistolikCtrl = TextEditingController();
   final _diastolikCtrl = TextEditingController();
 
-  // Step 3 — antropometri
+  // Step 2 — antropometri
   final _bbCtrl = TextEditingController();
   final _tbCtrl = TextEditingController();
   final _lilaCtrl = TextEditingController();
@@ -44,32 +42,18 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   double? _bmi;
   double? _kenaikanBb;
 
-  // Step 4 — DJJ + keluhan
+  // Step 3 — DJJ + keluhan
   final _djjCtrl = TextEditingController();
   final _keluhanCtrl = TextEditingController();
   final _catatanCtrl = TextEditingController();
 
-  final _keys = List.generate(4, (_) => GlobalKey<FormState>());
+  // 3 form keys untuk 3 step
+  final _keys = List.generate(3, (_) => GlobalKey<FormState>());
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final p = context.read<PatientProvider>().selectedPatient;
-      // Pasien baru = belum pernah diperiksa → mulai dari step 0
-      final history = context.read<ExaminationProvider>().history;
-      setState(() {
-        _isPasienBaru = history.isEmpty;
-        _step = _isPasienBaru ? 0 : 1;
-
-        if (!_isPasienBaru && p != null) {
-          final usia = DateTime.now().difference(p.hpht).inDays ~/ 7;
-          _usiaCtrl.text = usia.toString();
-        }
-      });
-    });
-
-    // Auto-hitung BMI saat BB/TB berubah
+    // Auto-hitung BMI dan kenaikan BB saat BB/TB berubah
     _bbCtrl.addListener(_hitungBmi);
     _tbCtrl.addListener(_hitungBmi);
     _bbCtrl.addListener(_hitungKenaikanBbRealtime);
@@ -78,7 +62,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   @override
   void dispose() {
     for (final c in [
-      _usiaCtrl,
       _sistolikCtrl,
       _diastolikCtrl,
       _bbCtrl,
@@ -87,7 +70,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       _lpertCtrl,
       _djjCtrl,
       _keluhanCtrl,
-      _catatanCtrl
+      _catatanCtrl,
     ]) {
       c.dispose();
     }
@@ -104,14 +87,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
   }
 
-  void _hitungKenaikanBb() {
-    final bb = double.tryParse(_bbCtrl.text.replaceAll(',', '.'));
-    final history = context.read<ExaminationProvider>().history;
-    if (bb != null && history.isNotEmpty) {
-      setState(() => _kenaikanBb = bb - history.first.beratBadan);
-    }
-  }
-
   void _hitungKenaikanBbRealtime() {
     final bb = double.tryParse(_bbCtrl.text.replaceAll(',', '.'));
     final history = context.read<ExaminationProvider>().history;
@@ -122,12 +97,11 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
   }
 
-  // Navigasi antar step
+  // ── Navigasi antar step ─────────────────────────────────
 
   void _next() {
     if (!_keys[_step].currentState!.validate()) return;
-    if (_step == 2) _hitungKenaikanBb();
-    if (_step < 3) {
+    if (_step < 2) {
       setState(() => _step++);
     } else {
       _simpan();
@@ -135,12 +109,15 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   }
 
   void _prev() {
-    if (_step > (_isPasienBaru ? 0 : 1)) setState(() => _step--);
+    if (_step > 0) setState(() => _step--);
   }
+
+  // ── Simpan ──────────────────────────────────────────────
 
   Future<void> _simpan() async {
     final auth = context.read<AuthProvider>();
     final rulesProvider = context.read<RulesProvider>();
+    final patient = context.read<PatientProvider>().selectedPatient;
 
     // Pastikan rules sudah selesai di-load
     if (!rulesProvider.isLoaded) {
@@ -148,7 +125,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
         content: Text('Sedang memuat data rules, coba lagi sebentar...'),
         backgroundColor: AppColors.warning,
       ));
-      // Coba fetch ulang
       await rulesProvider.fetchRules();
       return;
     }
@@ -161,12 +137,17 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       return;
     }
 
+    // Hitung usia kehamilan otomatis dari HPHT
+    final usiaKehamilan = patient?.hpht != null
+        ? DateFormatter.usiaKehamilanMinggu(patient!.hpht!) ?? 0
+        : 0;
+
     final saved = await context.read<ExaminationProvider>().saveExamination(
           patientId: widget.patientId,
           kaderId: auth.currentUser!.id,
           kaderNama: auth.currentUser!.nama,
           bidanId: auth.currentUser!.createdBy,
-          usiaKehamilan: int.parse(_usiaCtrl.text.trim()),
+          usiaKehamilan: usiaKehamilan,
           sistolik: int.parse(_sistolikCtrl.text.trim()),
           diastolik: int.parse(_diastolikCtrl.text.trim()),
           beratBadan: double.parse(_bbCtrl.text.trim().replaceAll(',', '.')),
@@ -183,7 +164,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           catatanKader: _catatanCtrl.text.trim().isEmpty
               ? null
               : _catatanCtrl.text.trim(),
-          rules: rulesProvider.rules, // ← sudah dipastikan tidak kosong
+          rules: rulesProvider.rules,
         );
 
     if (!mounted) return;
@@ -193,7 +174,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
         context,
         onCetak: () => context.go(AppRoutes.examinationResult, extra: saved.id),
         onNanti: () {
-          // Reload patient detail supaya tombol riwayat & status ter-update
           context.read<ExaminationProvider>().loadHistory(widget.patientId);
           context.pop();
         },
@@ -206,20 +186,19 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
   }
 
-  // Build
+  // ── Build ────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<ExaminationProvider>().isLoading;
     final patient = context.watch<PatientProvider>().selectedPatient;
-    final steps = _isPasienBaru
-        ? [
-            AppStrings.step1Title,
-            AppStrings.step2Title,
-            AppStrings.step3Title,
-            AppStrings.step4Title
-          ]
-        : [AppStrings.step2Title, AppStrings.step3Title, AppStrings.step4Title];
-    final stepIndex = _isPasienBaru ? _step : _step - 1;
+
+    // Selalu 3 step
+    const steps = [
+      AppStrings.step2Title, // Tekanan Darah
+      AppStrings.step3Title, // Antropometri
+      AppStrings.step4Title, // DJJ & Keluhan
+    ];
 
     return LoadingOverlay(
       isLoading: isLoading,
@@ -227,14 +206,35 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: Text(AppStrings.periksa +
-              (patient != null ? ' — ${patient.nama}' : '')),
+          title: Text(
+            AppStrings.periksa + (patient != null ? ' — ${patient.nama}' : ''),
+          ),
         ),
         body: Column(children: [
-          // Progress indicator
-          _StepIndicator(steps: steps, currentIndex: stepIndex),
+          // ── Progress indicator ─────────────────────────
+          _StepIndicator(steps: steps, currentIndex: _step),
 
-          // Form konten
+          // ── Info usia kehamilan (dari HPHT) ───────────
+          if (patient?.hpht != null)
+            Container(
+              color: AppColors.redPale,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(children: [
+                const Icon(Icons.pregnant_woman_rounded,
+                    color: AppColors.primary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(patient!.hpht!)} minggu',
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ]),
+            ),
+
+          // ── Form konten ────────────────────────────────
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -245,33 +245,34 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
             ),
           ),
 
-          // Navigasi tombol
+          // ── Navigasi tombol ────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Row(children: [
-                if (_step > (_isPasienBaru ? 0 : 1)) ...[
+                if (_step > 0) ...[
                   Expanded(
                     child: CustomButton.outline(
-                        label: 'Kembali',
-                        onPressed: _prev,
-                        icon: Icons.arrow_back_rounded),
+                      label: 'Kembali',
+                      onPressed: _prev,
+                      icon: Icons.arrow_back_rounded,
+                    ),
                   ),
                   const SizedBox(width: 12),
                 ],
                 Expanded(
                   child: Consumer<RulesProvider>(
                     builder: (_, rulesProvider, __) => CustomButton(
-                      label: _step == 3
+                      label: _step == 2
                           ? (rulesProvider.isLoaded
                               ? AppStrings.simpanPemeriksaan
                               : 'Memuat rules...')
                           : 'Lanjut',
                       onPressed:
-                          (isLoading || (_step == 3 && !rulesProvider.isLoaded))
+                          (isLoading || (_step == 2 && !rulesProvider.isLoaded))
                               ? null
                               : _next,
-                      icon: _step == 3
+                      icon: _step == 2
                           ? Icons.save_rounded
                           : Icons.arrow_forward_rounded,
                     ),
@@ -288,38 +289,39 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   Widget _buildStep() {
     switch (_step) {
       case 0:
-        return _Step1Usia(
-            key: ValueKey(_step), formKey: _keys[0], ctrl: _usiaCtrl);
-      case 1:
         return _Step2Tensi(
-            key: ValueKey(_step),
-            formKey: _keys[1],
-            sistolikCtrl: _sistolikCtrl,
-            diastolikCtrl: _diastolikCtrl);
-      case 2:
+          key: const ValueKey(0),
+          formKey: _keys[0],
+          sistolikCtrl: _sistolikCtrl,
+          diastolikCtrl: _diastolikCtrl,
+        );
+      case 1:
         return _Step3Antropometri(
-            key: ValueKey(_step),
-            formKey: _keys[2],
-            bbCtrl: _bbCtrl,
-            tbCtrl: _tbCtrl,
-            lilaCtrl: _lilaCtrl,
-            lpertCtrl: _lpertCtrl,
-            bmi: _bmi,
-            kenaikanBb: _kenaikanBb);
-      case 3:
+          key: const ValueKey(1),
+          formKey: _keys[1],
+          bbCtrl: _bbCtrl,
+          tbCtrl: _tbCtrl,
+          lilaCtrl: _lilaCtrl,
+          lpertCtrl: _lpertCtrl,
+          bmi: _bmi,
+          kenaikanBb: _kenaikanBb,
+        );
+      case 2:
         return _Step4Djj(
-            key: ValueKey(_step),
-            formKey: _keys[3],
-            djjCtrl: _djjCtrl,
-            keluhanCtrl: _keluhanCtrl,
-            catatanCtrl: _catatanCtrl);
+          key: const ValueKey(2),
+          formKey: _keys[2],
+          djjCtrl: _djjCtrl,
+          keluhanCtrl: _keluhanCtrl,
+          catatanCtrl: _catatanCtrl,
+        );
       default:
         return const SizedBox.shrink();
     }
   }
 }
 
-// Step Indicato
+// ── Step Indicator ───────────────────────────────────────────
+
 class _StepIndicator extends StatelessWidget {
   final List<String> steps;
   final int currentIndex;
@@ -335,11 +337,12 @@ class _StepIndicator extends StatelessWidget {
           if (i.isOdd) {
             final idx = i ~/ 2;
             return Expanded(
-                child: Container(
-                    height: 2,
-                    color: idx < currentIndex
-                        ? AppColors.primary
-                        : AppColors.divider));
+              child: Container(
+                height: 2,
+                color:
+                    idx < currentIndex ? AppColors.primary : AppColors.divider,
+              ),
+            );
           }
           final idx = i ~/ 2;
           final done = idx < currentIndex;
@@ -356,29 +359,34 @@ class _StepIndicator extends StatelessWidget {
                       ? AppColors.success
                       : (active ? AppColors.primary : AppColors.background),
                   border: Border.all(
-                      color: done
-                          ? AppColors.success
-                          : (active ? AppColors.primary : AppColors.divider),
-                      width: 2),
+                    color: done
+                        ? AppColors.success
+                        : (active ? AppColors.primary : AppColors.divider),
+                    width: 2,
+                  ),
                 ),
                 child: Center(
                   child: done
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text('${idx + 1}',
+                      : Text(
+                          '${idx + 1}',
                           style: TextStyle(
-                              color:
-                                  active ? Colors.white : AppColors.textSecond,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14)),
+                            color: active ? Colors.white : AppColors.textSecond,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 4),
-              Text(steps[idx],
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: active ? AppColors.primary : AppColors.textSecond,
-                      fontWeight:
-                          active ? FontWeight.w600 : FontWeight.normal)),
+              Text(
+                steps[idx],
+                style: TextStyle(
+                  fontSize: 11,
+                  color: active ? AppColors.primary : AppColors.textSecond,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
             ]),
           );
         }),
@@ -387,41 +395,17 @@ class _StepIndicator extends StatelessWidget {
   }
 }
 
-// Step 1: Usia Kehamilan
-class _Step1Usia extends StatelessWidget {
-  final GlobalKey<FormState> formKey;
-  final TextEditingController ctrl;
-  const _Step1Usia({super.key, required this.formKey, required this.ctrl});
+// ── Step 1: Tekanan Darah ────────────────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-        key: formKey,
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SectionHeader(title: AppStrings.step1Title),
-          const SizedBox(height: 16),
-          IntTextField(
-              controller: ctrl,
-              label: AppStrings.usiaKehamilanLabel,
-              validator: Validators.usiaKehamilan,
-              textInputAction: TextInputAction.done),
-          const SizedBox(height: 12),
-          const Text('Masukkan usia kehamilan dalam minggu (1–45).',
-              style: TextStyle(color: AppColors.textSecond, fontSize: 14)),
-        ]));
-  }
-}
-
-// Step 2: Tekanan Darah
 class _Step2Tensi extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController sistolikCtrl, diastolikCtrl;
-  const _Step2Tensi(
-      {super.key,
-      required this.formKey,
-      required this.sistolikCtrl,
-      required this.diastolikCtrl});
+  const _Step2Tensi({
+    super.key,
+    required this.formKey,
+    required this.sistolikCtrl,
+    required this.diastolikCtrl,
+  });
   @override
   State<_Step2Tensi> createState() => _Step2TensiState();
 }
@@ -454,45 +438,51 @@ class _Step2TensiState extends State<_Step2Tensi> {
   @override
   Widget build(BuildContext context) {
     return Form(
-        key: widget.formKey,
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SectionHeader(title: AppStrings.step2Title),
+      key: widget.formKey,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SectionHeader(title: AppStrings.step2Title),
+        const SizedBox(height: 16),
+        IntTextField(
+          controller: widget.sistolikCtrl,
+          label: AppStrings.sistolikLabel,
+          validator: Validators.sistolik,
+          onChanged: (_) => _check(),
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 14),
+        IntTextField(
+          controller: widget.diastolikCtrl,
+          label: AppStrings.diastolikLabel,
+          validator: Validators.diastolik,
+          onChanged: (_) => _check(),
+          textInputAction: TextInputAction.done,
+        ),
+        if (_tensiStatus != null) ...[
           const SizedBox(height: 16),
-          IntTextField(
-              controller: widget.sistolikCtrl,
-              label: AppStrings.sistolikLabel,
-              validator: Validators.sistolik,
-              onChanged: (_) => _check(),
-              textInputAction: TextInputAction.next),
-          const SizedBox(height: 14),
-          IntTextField(
-              controller: widget.diastolikCtrl,
-              label: AppStrings.diastolikLabel,
-              validator: Validators.diastolik,
-              onChanged: (_) => _check(),
-              textInputAction: TextInputAction.done),
-          if (_tensiStatus != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                  color: _tensiColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: _tensiColor.withValues(alpha: 0.3))),
-              child: Text(_tensiStatus!,
-                  style: TextStyle(
-                      color: _tensiColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15)),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _tensiColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _tensiColor.withValues(alpha: 0.3)),
             ),
-          ],
-        ]));
+            child: Text(
+              _tensiStatus!,
+              style: TextStyle(
+                color: _tensiColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+      ]),
+    );
   }
 }
 
-// Step 3: Antropometri─
+// ── Step 2: Antropometri ─────────────────────────────────────
+
 class _Step3Antropometri extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController bbCtrl, tbCtrl, lilaCtrl, lpertCtrl;
@@ -520,15 +510,13 @@ class _Step3AntropometriState extends State<_Step3Antropometri> {
   void initState() {
     super.initState();
     widget.lilaCtrl.addListener(_checkKek);
-    _checkKek(); // cek awal saat widget dibuka
+    _checkKek();
   }
 
   void _checkKek() {
     final val = double.tryParse(widget.lilaCtrl.text.replaceAll(',', '.'));
-
     final kek = val != null && RuleEngine.isKek(val);
-
-    setState(() => _isKek = kek);
+    if (kek != _isKek) setState(() => _isKek = kek);
   }
 
   @override
@@ -541,61 +529,58 @@ class _Step3AntropometriState extends State<_Step3Antropometri> {
   Widget build(BuildContext context) {
     return Form(
       key: widget.formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SectionHeader(title: AppStrings.step3Title),
-          const SizedBox(height: 16),
-          DecimalTextField(
-            controller: widget.bbCtrl,
-            label: AppStrings.beratBadanLabel,
-            validator: Validators.beratBadan,
-            textInputAction: TextInputAction.next,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SectionHeader(title: AppStrings.step3Title),
+        const SizedBox(height: 16),
+        DecimalTextField(
+          controller: widget.bbCtrl,
+          label: AppStrings.beratBadanLabel,
+          validator: Validators.beratBadan,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 14),
+        DecimalTextField(
+          controller: widget.tbCtrl,
+          label: AppStrings.tinggiBadanLabel,
+          validator: Validators.tinggiBadan,
+          textInputAction: TextInputAction.next,
+        ),
+        if (widget.bmi != null) ...[
+          const SizedBox(height: 10),
+          _InfoTile(
+            'BMI',
+            '${widget.bmi!.toStringAsFixed(1)} — ${RuleEngine.kategoriBmi(widget.bmi!)}',
+            AppColors.info,
           ),
-          const SizedBox(height: 14),
-          DecimalTextField(
-            controller: widget.tbCtrl,
-            label: AppStrings.tinggiBadanLabel,
-            validator: Validators.tinggiBadan,
-            textInputAction: TextInputAction.next,
-          ),
-          if (widget.bmi != null) ...[
-            const SizedBox(height: 10),
+          if (widget.kenaikanBb != null)
             _InfoTile(
-              'BMI',
-              '${widget.bmi!.toStringAsFixed(1)} — ${RuleEngine.kategoriBmi(widget.bmi!)}',
-              AppColors.info,
+              'Kenaikan BB',
+              '${widget.kenaikanBb! >= 0 ? '+' : ''}${widget.kenaikanBb!.toStringAsFixed(1)} kg dari pemeriksaan sebelumnya',
+              widget.kenaikanBb! < 0 ? AppColors.warning : AppColors.success,
             ),
-            if (widget.kenaikanBb != null)
-              _InfoTile(
-                'Kenaikan BB',
-                '${widget.kenaikanBb! >= 0 ? '+' : ''}${widget.kenaikanBb!.toStringAsFixed(1)} kg dari pemeriksaan sebelumnya',
-                widget.kenaikanBb! < 0 ? AppColors.warning : AppColors.success,
-              ),
-          ],
-          const SizedBox(height: 14),
-          DecimalTextField(
-            controller: widget.lilaCtrl,
-            label: AppStrings.lingkarLenganLabel,
-            validator: Validators.lingkarLengan,
-            textInputAction: TextInputAction.next,
-          ),
-          if (_isKek) ...[
-            const SizedBox(height: 8),
-            const _InfoTile(
-              'Status LILA',
-              '⚠️ KEK — LILA < 23.5 cm',
-              AppColors.warning,
-            ),
-          ],
-          const SizedBox(height: 14),
-          DecimalTextField(
-            controller: widget.lpertCtrl,
-            label: AppStrings.lingkarPerutLabel,
-            textInputAction: TextInputAction.done,
+        ],
+        const SizedBox(height: 14),
+        DecimalTextField(
+          controller: widget.lilaCtrl,
+          label: AppStrings.lingkarLenganLabel,
+          validator: Validators.lingkarLengan,
+          textInputAction: TextInputAction.next,
+        ),
+        if (_isKek) ...[
+          const SizedBox(height: 8),
+          const _InfoTile(
+            'Status LILA',
+            '⚠️ KEK — LILA < 23.5 cm',
+            AppColors.warning,
           ),
         ],
-      ),
+        const SizedBox(height: 14),
+        DecimalTextField(
+          controller: widget.lpertCtrl,
+          label: AppStrings.lingkarPerutLabel,
+          textInputAction: TextInputAction.done,
+        ),
+      ]),
     );
   }
 }
@@ -604,36 +589,46 @@ class _InfoTile extends StatelessWidget {
   final String label, value;
   final Color color;
   const _InfoTile(this.label, this.value, this.color);
+
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.25))),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
       child: Row(children: [
-        Text('$label: ',
-            style: TextStyle(
-                color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
         Expanded(
-            child: Text(value, style: TextStyle(color: color, fontSize: 14))),
+          child: Text(value, style: TextStyle(color: color, fontSize: 14)),
+        ),
       ]),
     );
   }
 }
 
-// Step 4: DJJ + Keluhan
+// ── Step 3: DJJ + Keluhan ────────────────────────────────────
+
 class _Step4Djj extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController djjCtrl, keluhanCtrl, catatanCtrl;
-  const _Step4Djj(
-      {super.key,
-      required this.formKey,
-      required this.djjCtrl,
-      required this.keluhanCtrl,
-      required this.catatanCtrl});
+  const _Step4Djj({
+    super.key,
+    required this.formKey,
+    required this.djjCtrl,
+    required this.keluhanCtrl,
+    required this.catatanCtrl,
+  });
   @override
   State<_Step4Djj> createState() => _Step4DjjState();
 }
@@ -665,42 +660,49 @@ class _Step4DjjState extends State<_Step4Djj> {
   @override
   Widget build(BuildContext context) {
     return Form(
-        key: widget.formKey,
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SectionHeader(title: AppStrings.step4Title),
-          const SizedBox(height: 16),
-          IntTextField(
-              controller: widget.djjCtrl,
-              label: AppStrings.djjLabel,
-              validator: Validators.djj,
-              onChanged: (_) => _check(),
-              textInputAction: TextInputAction.next),
-          if (_djjStatus != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                  color: _djjColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _djjColor.withValues(alpha: 0.3))),
-              child: Text(_djjStatus!,
-                  style: TextStyle(
-                      color: _djjColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15)),
+      key: widget.formKey,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SectionHeader(title: AppStrings.step4Title),
+        const SizedBox(height: 16),
+        IntTextField(
+          controller: widget.djjCtrl,
+          label: AppStrings.djjLabel,
+          validator: Validators.djj,
+          onChanged: (_) => _check(),
+          textInputAction: TextInputAction.next,
+        ),
+        if (_djjStatus != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _djjColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _djjColor.withValues(alpha: 0.3)),
             ),
-          ],
-          const SizedBox(height: 14),
-          CustomTextField(
-              controller: widget.keluhanCtrl,
-              label: AppStrings.keluhanLabel,
-              maxLines: 3),
-          const SizedBox(height: 14),
-          CustomTextField(
-              controller: widget.catatanCtrl,
-              label: AppStrings.catatanKaderLabel,
-              maxLines: 3),
-        ]));
+            child: Text(
+              _djjStatus!,
+              style: TextStyle(
+                color: _djjColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 14),
+        CustomTextField(
+          controller: widget.keluhanCtrl,
+          label: AppStrings.keluhanLabel,
+          maxLines: 3,
+        ),
+        const SizedBox(height: 14),
+        CustomTextField(
+          controller: widget.catatanCtrl,
+          label: AppStrings.catatanKaderLabel,
+          maxLines: 3,
+        ),
+      ]),
+    );
   }
 }

@@ -71,10 +71,14 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
 
     // Pisahkan pasien aktif dan selesai
     final listAktif = _query.isEmpty
-        ? patient.patients.where((p) => p.status != 'selesai').toList()
+        ? patient.patients
+            .where((p) => p.status != StatusPasien.selesai)
+            .toList()
         : patient.search(_query);
     final listSelesai = _query.isEmpty
-        ? patient.patients.where((p) => p.status == 'selesai').toList()
+        ? patient.patients
+            .where((p) => p.status == StatusPasien.selesai)
+            .toList()
         : [];
 
     return GestureDetector(
@@ -114,7 +118,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${patient.patients.where((p) => p.status != 'selesai').length} pasien aktif',
+                        '${patient.patients.where((p) => p.status != StatusPasien.selesai).length} pasien aktif',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 15,
@@ -263,12 +267,16 @@ class _PatientCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.push('/kader/patients/${patient.id}').then((_) {
-            // reload supaya perubahan status/pemeriksaan baru langsung terlihat
-            context.read<PatientProvider>().loadByKader(
-                  context.read<AuthProvider>().currentUser!.id,
-                );
-          }),
+          onTap: () async {
+            await context.push('/kader/patients/${patient.id}');
+
+            if (!context.mounted) return;
+
+            final auth = context.read<AuthProvider>();
+            final patientProvider = context.read<PatientProvider>();
+
+            await patientProvider.loadByKader(auth.currentUser!.id);
+          },
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

@@ -10,7 +10,6 @@ import '../../../data/models/patient_model.dart';
 import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
 import '../../_widgets/empty_state.dart';
-import '../../_widgets/section_header.dart';
 
 class AllPatientsScreen extends StatefulWidget {
   const AllPatientsScreen({super.key});

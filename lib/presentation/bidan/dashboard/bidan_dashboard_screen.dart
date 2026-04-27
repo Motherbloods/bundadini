@@ -11,7 +11,6 @@ import '../../../core/utils/date_formatter.dart';
 import '../../../data/repositories/examination_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../domain/providers/auth_provider.dart';
-import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
 import '../../_widgets/konfirmasi_dialog.dart';
 import '../../_widgets/section_header.dart';
