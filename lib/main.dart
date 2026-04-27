@@ -8,6 +8,7 @@ import 'domain/providers/auth_provider.dart';
 import 'domain/providers/patient_provider.dart';
 import 'domain/providers/examination_provider.dart';
 import 'domain/providers/rules_provider.dart';
+import 'domain/providers/connectivity_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 
@@ -36,6 +37,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PatientProvider()),
         ChangeNotifierProvider(create: (_) => ExaminationProvider()),
         ChangeNotifierProvider(create: (_) => RulesProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: const BundaDiniApp(),
     ),

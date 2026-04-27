@@ -1,4 +1,6 @@
 import 'package:bundadini/data/models/examination_model.dart';
+import 'package:bundadini/domain/providers/connectivity_provider.dart';
+import 'package:bundadini/presentation/_widgets/offline_banner.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -207,95 +209,104 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
               onPressed: _logout),
         ],
       ),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: _load,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            // Sapaan
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.primaryDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(16)),
-              child: Row(children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Selamat datang,',
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text(nama,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(DateFormatter.toDisplayWithDay(DateTime.now()),
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 13)),
-                ]),
-                const Spacer(),
-                Container(
-                    padding: const EdgeInsets.all(12),
+      body: Consumer<ConnectivityProvider>(
+        builder: (_, connectivity, child) => OfflineBanner(
+          isOffline: connectivity.isOffline,
+          child: child!,
+        ),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _load,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Sapaan
+                  Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle),
-                    child: const Icon(Icons.medical_services_rounded,
-                        color: Colors.white, size: 28)),
-              ]),
-            ),
-            const SizedBox(height: 16),
-
-            // Stats cards
-            const SectionHeader(title: 'Ringkasan Data'),
-            const SizedBox(height: 12),
-            _loadingStats
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  )
-                : _StatsGrid(
-                    totalIbu: allPatients.length,
-                    pemeriksaanBulanIni: _pemeriksaanBulanIni,
-                    ibuRisikoTinggi: _ibuRisikoTinggi,
-                    kaderAktif: _kaderAktif,
+                        gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.primaryDark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(16)),
+                    child: Row(children: [
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Selamat datang,',
+                                style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                    fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Text(nama,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text(DateFormatter.toDisplayWithDay(DateTime.now()),
+                                style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 13)),
+                          ]),
+                      const Spacer(),
+                      Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle),
+                          child: const Icon(Icons.medical_services_rounded,
+                              color: Colors.white, size: 28)),
+                    ]),
                   ),
-            const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-            // Bar Chart 6 bulan
-            const SectionHeader(title: AppStrings.statistik6Bulan),
-            const SizedBox(height: 12),
-            _loadingStats
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary),
-                    ),
-                  )
-                : _BarChartCard(chartData: _chartData),
-            const SizedBox(height: 16),
+                  // Stats cards
+                  const SectionHeader(title: 'Ringkasan Data'),
+                  const SizedBox(height: 12),
+                  _loadingStats
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary),
+                          ),
+                        )
+                      : _StatsGrid(
+                          totalIbu: allPatients.length,
+                          pemeriksaanBulanIni: _pemeriksaanBulanIni,
+                          ibuRisikoTinggi: _ibuRisikoTinggi,
+                          kaderAktif: _kaderAktif,
+                        ),
+                  const SizedBox(height: 16),
 
-            // Menu Grid
-            const SectionHeader(title: 'Menu'),
-            const SizedBox(height: 12),
-            _MenuGrid(
-              showSnackbar: _showSnackbar,
-              onRefresh: _load,
-            ),
-            const SizedBox(height: 24),
-          ]),
+                  // Bar Chart 6 bulan
+                  const SectionHeader(title: AppStrings.statistik6Bulan),
+                  const SizedBox(height: 12),
+                  _loadingStats
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: CircularProgressIndicator(
+                                color: AppColors.primary),
+                          ),
+                        )
+                      : _BarChartCard(chartData: _chartData),
+                  const SizedBox(height: 16),
+
+                  // Menu Grid
+                  const SectionHeader(title: 'Menu'),
+                  const SizedBox(height: 12),
+                  _MenuGrid(
+                    showSnackbar: _showSnackbar,
+                    onRefresh: _load,
+                  ),
+                  const SizedBox(height: 24),
+                ]),
+          ),
         ),
       ),
     );

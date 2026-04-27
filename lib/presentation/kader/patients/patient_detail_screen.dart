@@ -1,4 +1,5 @@
 import 'package:bundadini/presentation/_widgets/konfirmasi_dialog.dart';
+import 'package:bundadini/presentation/_widgets/network_image_fallback.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -127,17 +128,14 @@ class _BiodataTab extends StatelessWidget {
         Center(
           child: Column(children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: patient.fotoUrl.isNotEmpty
-                  ? Image.network(patient.fotoUrl,
-                      width: 110, height: 110, fit: BoxFit.cover)
-                  : Container(
-                      width: 110,
-                      height: 110,
-                      color: AppColors.redPale,
-                      child: const Icon(Icons.person_rounded,
-                          color: AppColors.primary, size: 60)),
-            ),
+                borderRadius: BorderRadius.circular(20),
+                child: NetworkImageFallback(
+                  url: patient.fotoUrl,
+                  width: 110,
+                  height: 110,
+                  borderRadius: BorderRadius.circular(20),
+                  fallbackIcon: Icons.person_rounded,
+                )),
             const SizedBox(height: 12),
             Text(patient.nama,
                 style: Theme.of(context)

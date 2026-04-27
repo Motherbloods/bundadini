@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bundadini/presentation/_widgets/network_image_fallback.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -171,22 +172,13 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                       onTap: _showFotoPicker,
                       child: Stack(children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: _newFoto != null
-                              ? Image.file(_newFoto!,
-                                  width: 110, height: 110, fit: BoxFit.cover)
-                              : (_patient!.fotoUrl.isNotEmpty
-                                  ? Image.network(_patient!.fotoUrl,
-                                      width: 110,
-                                      height: 110,
-                                      fit: BoxFit.cover)
-                                  : Container(
-                                      width: 110,
-                                      height: 110,
-                                      color: AppColors.redPale,
-                                      child: const Icon(Icons.person_rounded,
-                                          color: AppColors.primary, size: 60))),
-                        ),
+                            borderRadius: BorderRadius.circular(16),
+                            child: NetworkImageFallback(
+                              url: _patient!.fotoUrl,
+                              width: 110,
+                              height: 110,
+                              borderRadius: BorderRadius.circular(16),
+                            )),
                         Positioned(
                             bottom: 6,
                             right: 6,

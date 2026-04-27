@@ -1,4 +1,5 @@
 import 'package:bundadini/domain/providers/auth_provider.dart';
+import 'package:bundadini/presentation/_widgets/network_image_fallback.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -184,15 +185,11 @@ class _PatientBidanCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(children: [
-            ClipRRect(
+            NetworkImageFallback(
+              url: patient.fotoUrl,
+              width: 60,
+              height: 60,
               borderRadius: BorderRadius.circular(12),
-              child: patient.fotoUrl.isNotEmpty
-                  ? Image.network(patient.fotoUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _avatar())
-                  : _avatar(),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -233,13 +230,6 @@ class _PatientBidanCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _avatar() => Container(
-      width: 56,
-      height: 56,
-      color: AppColors.redPale,
-      child:
-          const Icon(Icons.person_rounded, color: AppColors.primary, size: 32));
 
   Color _statusColor(StatusPasien s) {
     switch (s) {
