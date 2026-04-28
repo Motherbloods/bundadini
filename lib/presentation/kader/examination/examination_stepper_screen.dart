@@ -168,19 +168,69 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     if (!mounted) return;
 
     if (saved != null) {
-      await CetakDialog.show(
-        context,
-        onCetak: () => context.go(AppRoutes.examinationResult, extra: saved.id),
-        onNanti: () {
-          context.read<ExaminationProvider>().loadHistory(widget.patientId);
-          context.pop();
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Gagal menyimpan pemeriksaan'),
-        backgroundColor: AppColors.danger,
-      ));
+      final isBidan = context.read<AuthProvider>().isBidan;
+      if (isBidan) {
+        await CetakDialog.show(
+          context,
+          onCetak: () =>
+              context.go(AppRoutes.examinationResult, extra: saved.id),
+          onNanti: () {
+            context.read<ExaminationProvider>().loadHistory(widget.patientId);
+            context.pop();
+          },
+        );
+      } else {
+        if (mounted) {
+          await showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              content: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                      color: AppColors.successLight, shape: BoxShape.circle),
+                  child: const Icon(Icons.check_circle_rounded,
+                      color: AppColors.success, size: 40),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '✅ Pemeriksaan Berhasil Disimpan!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Data pemeriksaan telah tersimpan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14),
+                ),
+              ]),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context
+                          .read<ExaminationProvider>()
+                          .loadHistory(widget.patientId);
+                      context.pop();
+                    },
+                    child: const Text('Kembali ke Detail Pasien'),
+                  ),
+                ),
+              ],
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            ),
+          );
+        }
+      }
     }
   }
 

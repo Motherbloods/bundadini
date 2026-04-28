@@ -145,6 +145,16 @@ class _ExportScreenState extends State<ExportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (!auth.isBidan) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Ekspor Data')),
+        body: const Center(
+          child: Text('Akses ditolak. Fitur ini hanya untuk Bidan.'),
+        ),
+      );
+    }
     return LoadingOverlay(
       isLoading: _loading,
       message: _statusMsg ?? AppStrings.prosesExport,

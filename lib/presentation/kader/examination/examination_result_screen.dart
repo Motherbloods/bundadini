@@ -233,20 +233,28 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
               ),
             if (exam.isRisikoTinggi) const SizedBox(height: 16),
 
-            CustomButton(
-                label: AppStrings.cetakPdf,
-                onPressed: _pdfLoading ? null : _cetakPdf,
-                isLoading: _pdfLoading,
-                icon: Icons.picture_as_pdf_rounded),
-            const SizedBox(height: 10),
-            CustomButton.outline(
-              label: AppStrings.kembaliBeranda,
-              onPressed: () {
-                final isBidan = context.read<AuthProvider>().isBidan;
-                context.go(
-                    isBidan ? AppRoutes.bidanDashboard : AppRoutes.kaderHome);
-              },
-              icon: Icons.home_rounded,
+            Consumer<AuthProvider>(
+              builder: (_, auth, __) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (auth.isBidan) ...[
+                    CustomButton(
+                      label: AppStrings.cetakPdf,
+                      onPressed: _pdfLoading ? null : _cetakPdf,
+                      isLoading: _pdfLoading,
+                      icon: Icons.picture_as_pdf_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  CustomButton.outline(
+                    label: AppStrings.kembaliBeranda,
+                    onPressed: () => context.go(auth.isBidan
+                        ? AppRoutes.bidanDashboard
+                        : AppRoutes.kaderHome),
+                    icon: Icons.home_rounded,
+                  ),
+                ],
+              ),
             ),
           ]),
         ),
