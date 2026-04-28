@@ -7,6 +7,8 @@ import '../data/models/user_model.dart';
 import '../domain/providers/auth_provider.dart';
 import '../presentation/auth/splash_screen.dart';
 import '../presentation/auth/login_screen.dart';
+import '../presentation/auth/about_screen.dart';
+import '../presentation/auth/privacy_screen.dart';
 
 import '../presentation/kader/dashboard/kader_home_screen.dart';
 import '../presentation/kader/patients/add_patient_screen.dart';
@@ -25,6 +27,13 @@ import '../presentation/bidan/reports/export_screen.dart';
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+  static const _publicRoutes = [
+    AppRoutes.splash,
+    AppRoutes.login,
+    AppRoutes.about,
+    AppRoutes.privacy,
+  ];
 
   static const _sharedRoutes = [
     '/shared/examine/result',
@@ -45,6 +54,14 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.login,
           builder: (_, __) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.about,
+          builder: (_, __) => const AboutScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.privacy,
+          builder: (_, __) => const PrivacyScreen(),
         ),
 
         GoRoute(
@@ -130,6 +147,9 @@ class AppRouter {
 
     final onSplash = location == AppRoutes.splash;
     final onLogin = location == AppRoutes.login;
+
+    final isPublic = _publicRoutes.contains(location);
+    if (isPublic && !onSplash && !onLogin) return null;
 
     // Belum login → ke login
     if (!isLoggedIn) {

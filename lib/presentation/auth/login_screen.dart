@@ -245,18 +245,46 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           const Spacer(),
 
-                          // Footer
-                          Center(
-                            child: Text(
-                              'Hubungi bidan jika lupa kata sandi',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.textSecond,
+                          Column(
+                            children: [
+                              Text(
+                                'Hubungi bidan jika lupa kata sandi',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: AppColors.textSecond),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _FooterLink(
+                                    label: 'Tentang Aplikasi',
+                                    icon: Icons.info_outline_rounded,
+                                    onTap: () => context.push(AppRoutes.about),
                                   ),
-                              textAlign: TextAlign.center,
-                            ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.textSecond,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  _FooterLink(
+                                    label: 'Kebijakan Pengguna',
+                                    icon: Icons.shield_outlined,
+                                    onTap: () =>
+                                        context.push(AppRoutes.privacy),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 24),
@@ -269,5 +297,39 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ));
+  }
+}
+
+class _FooterLink extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _FooterLink({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

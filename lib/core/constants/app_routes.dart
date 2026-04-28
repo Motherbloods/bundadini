@@ -4,6 +4,8 @@ class AppRoutes {
   // Auth
   static const String splash = '/';
   static const String login = '/login';
+  static const about = '/about';
+  static const privacy = '/privacy';
 
   // Kader
   static const String kaderHome = '/kader/home';
