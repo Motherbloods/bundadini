@@ -217,12 +217,51 @@ class _BiodataTab extends StatelessWidget {
         const SectionHeader(title: 'Data Kehamilan'),
         const SizedBox(height: 12),
         _InfoCard(items: [
-          _InfoItem('HPHT', DateFormatter.toDisplay(patient.hpht)),
-          _InfoItem('Taksiran Persalinan',
-              DateFormatter.toDisplay(DateFormatter.taksiran(patient.hpht))),
-          _InfoItem('Usia Kehamilan Saat Ini',
-              '${DateFormatter.usiaKehamilanMinggu(patient.hpht)} minggu'),
+          _InfoItem(
+            'HPHT',
+            patient.hpht != null
+                ? DateFormatter.toDisplay(patient.hpht!)
+                : 'Belum diisi',
+          ),
+          _InfoItem(
+            'Taksiran Persalinan',
+            patient.hpht != null
+                ? DateFormatter.toDisplay(
+                    DateFormatter.taksiran(patient.hpht!)!)
+                : 'Tersedia setelah HPHT diisi',
+          ),
+          _InfoItem(
+            'Usia Kehamilan Saat Ini',
+            patient.hpht != null
+                ? '${DateFormatter.usiaKehamilanMinggu(patient.hpht!)} minggu'
+                : 'Tersedia setelah HPHT diisi',
+          ),
         ]),
+
+        if (patient.hpht == null)
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+                color: AppColors.warningLight,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.4))),
+            child: const Row(children: [
+              Icon(Icons.info_outline_rounded,
+                  color: AppColors.warning, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'HPHT belum diisi. Ketuk Edit untuk menambahkan.',
+                  style: TextStyle(
+                    color: AppColors.warning,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ]),
+          ),
 
         const SizedBox(height: 24),
 

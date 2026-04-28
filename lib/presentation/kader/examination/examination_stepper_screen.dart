@@ -97,7 +97,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
   }
 
-  // ── Navigasi antar step ─────────────────────────────────
+  // Navigasi antar step
 
   void _next() {
     if (!_keys[_step].currentState!.validate()) return;
@@ -112,7 +112,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     if (_step > 0) setState(() => _step--);
   }
 
-  // ── Simpan ──────────────────────────────────────────────
+  // Simpan
 
   Future<void> _simpan() async {
     final auth = context.read<AuthProvider>();
@@ -138,9 +138,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
 
     // Hitung usia kehamilan otomatis dari HPHT
-    final usiaKehamilan = patient?.hpht != null
-        ? DateFormatter.usiaKehamilanMinggu(patient!.hpht!) ?? 0
-        : 0;
+    final usiaKehamilan = DateFormatter.usiaKehamilanMinggu(patient?.hpht) ?? 0;
 
     final saved = await context.read<ExaminationProvider>().saveExamination(
           patientId: widget.patientId,
@@ -186,7 +184,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
     }
   }
 
-  // ── Build ────────────────────────────────────────────────
+  // Build
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +209,14 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           ),
         ),
         body: Column(children: [
-          // ── Progress indicator ─────────────────────────
+          // Progress indicator
           _StepIndicator(steps: steps, currentIndex: _step),
 
-          // ── Info usia kehamilan (dari HPHT) ───────────
-          if (patient?.hpht != null)
-            Container(
+          // Info usia kehamilan (dari HPHT)
+          Builder(builder: (_) {
+            final usia = DateFormatter.usiaKehamilanMinggu(patient?.hpht);
+            if (usia == null) return const SizedBox.shrink();
+            return Container(
               color: AppColors.redPale,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(children: [
@@ -224,7 +224,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
                     color: AppColors.primary, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(patient!.hpht!)} minggu',
+                  'Usia kehamilan: $usia minggu',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -232,9 +232,9 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
                   ),
                 ),
               ]),
-            ),
-
-          // ── Form konten ────────────────────────────────
+            );
+          }),
+          // Form konten
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
@@ -250,7 +250,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
             ),
           ),
 
-          // ── Navigasi tombol ────────────────────────────
+          // Navigasi tombol
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -325,7 +325,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   }
 }
 
-// ── Step Indicator ───────────────────────────────────────────
+// Step Indicator
 
 class _StepIndicator extends StatelessWidget {
   final List<String> steps;
@@ -400,7 +400,7 @@ class _StepIndicator extends StatelessWidget {
   }
 }
 
-// ── Step 1: Tekanan Darah ────────────────────────────────────
+// Step 1: Tekanan Darah
 
 class _Step2Tensi extends StatefulWidget {
   final GlobalKey<FormState> formKey;
@@ -486,7 +486,7 @@ class _Step2TensiState extends State<_Step2Tensi> {
   }
 }
 
-// ── Step 2: Antropometri ─────────────────────────────────────
+// Step 2: Antropometri
 
 class _Step3Antropometri extends StatefulWidget {
   final GlobalKey<FormState> formKey;
@@ -622,7 +622,7 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-// ── Step 3: DJJ + Keluhan ────────────────────────────────────
+// Step 3: DJJ + Keluhan
 
 class _Step4Djj extends StatefulWidget {
   final GlobalKey<FormState> formKey;

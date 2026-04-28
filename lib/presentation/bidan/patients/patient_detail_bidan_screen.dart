@@ -108,20 +108,33 @@ class _PatientDetailBidanScreenState extends State<PatientDetailBidanScreen>
             Card(
                 child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(children: [
-                _InfoRow('NIK', patient.nik),
-                _InfoRow('Tempat Lahir', patient.tempatLahir),
-                _InfoRow('Tanggal Lahir',
-                    DateFormatter.toDisplay(patient.tanggalLahir)),
-                _InfoRow('Nomor HP', patient.noHp),
-                _InfoRow('Alamat', patient.alamat),
-                _InfoRow('Gol Darah', patient.golonganDarah.value),
-                _InfoRow('HPHT', DateFormatter.toDisplay(patient.hpht)),
-                _InfoRow('Usia Kehamilan',
-                    '${DateFormatter.usiaKehamilanMinggu(patient.hpht)} minggu'),
-                _InfoRow('Kader Saat Ini', _kaderNama),
-                _InfoRow('Status', patient.status.label),
-              ]),
+              child: Column(
+                children: [
+                  _InfoRow('NIK', patient.nik),
+                  _InfoRow('Tempat Lahir', patient.tempatLahir),
+                  _InfoRow(
+                    'Tanggal Lahir',
+                    DateFormatter.toDisplay(patient.tanggalLahir),
+                  ),
+                  _InfoRow('Nomor HP', patient.noHp),
+                  _InfoRow('Alamat', patient.alamat),
+                  _InfoRow('Gol Darah', patient.golonganDarah.value),
+                  _InfoRow(
+                    'HPHT',
+                    patient.hpht != null
+                        ? DateFormatter.toDisplay(patient.hpht!)
+                        : 'Belum diisi',
+                  ),
+                  _InfoRow(
+                    'Usia Kehamilan',
+                    patient.hpht != null
+                        ? '${DateFormatter.usiaKehamilanMinggu(patient.hpht!)} minggu'
+                        : 'Belum diisi',
+                  ),
+                  _InfoRow('Kader Saat Ini', _kaderNama),
+                  _InfoRow('Status', patient.status.label),
+                ],
+              ),
             )),
           ]),
         ),

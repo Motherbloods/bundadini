@@ -105,14 +105,13 @@ class PdfService {
       final e = exams[i];
       final p = patientMap[e.patientId];
 
-      // Taksiran Persalinan dihitung dari HPHT pasien (data dari Firestore)
-      final tpStr = p != null ? _hitungTp(p.hpht) : '-';
+      final tpStr = p?.hpht != null ? _hitungTp(p!.hpht!) : 'Belum diisi';
 
       tableData.add([
         '${i + 1}',
         p?.nama ?? '-',
         p?.nik ?? '-',
-        e.kaderNama, // nama kader sudah disimpan di examination, bukan UID
+        e.kaderNama,
         _fmt(e.tanggal),
         '${e.usiaKehamilan}',
         tpStr,
@@ -519,9 +518,13 @@ class PdfService {
   static String _hitungTpFromString(String hphtStr) {
     final hpht = DateFormatter.parseFlexible(hphtStr);
 
-    if (hpht == null) return '-';
+    if (hpht == null) return 'Belum diisi';
 
-    return _fmt(DateFormatter.taksiran(hpht));
+    final taksiran = DateFormatter.taksiran(hpht);
+
+    if (taksiran == null) return 'Belum diisi';
+
+    return _fmt(taksiran);
   }
 
   static String _tensiStatus(int sis, int dia) {

@@ -33,11 +33,14 @@ class DateFormatter {
   }
 
   /// Hitung taksiran persalinan dari HPHT (Naegele's rule)
-  static DateTime taksiran(DateTime hpht) =>
-      hpht.add(const Duration(days: 280));
+  static DateTime? taksiran(DateTime? hpht) {
+    if (hpht == null) return null;
+    return hpht.add(const Duration(days: 280));
+  }
 
   /// Hitung usia kehamilan dalam minggu dari HPHT
-  static int usiaKehamilanMinggu(DateTime hpht) {
+  static int? usiaKehamilanMinggu(DateTime? hpht) {
+    if (hpht == null) return null;
     final diff = DateTime.now().difference(hpht).inDays;
     return (diff / 7).floor();
   }

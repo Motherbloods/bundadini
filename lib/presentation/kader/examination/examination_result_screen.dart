@@ -73,7 +73,6 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
           }
         }
       }
-
       await PdfService.generateAndPrint(
         exam: _exam!,
         patientNama: patient?.nama ?? '',
@@ -84,8 +83,9 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
         patientGolDarah: patient?.golonganDarah.name ?? '',
         patientAlamat: patient?.alamat ?? '',
         patientNoHp: patient?.noHp ?? '',
-        patientHpht:
-            patient != null ? DateFormatter.toDisplay(patient.hpht) : '',
+        patientHpht: patient?.hpht != null
+            ? DateFormatter.toDisplay(patient!.hpht!)
+            : 'Belum diisi',
         patientFotoUrl: patient?.fotoUrl ?? '',
         namaPuskesmas: namaPuskesmas,
         bidanNama: bidanNama,

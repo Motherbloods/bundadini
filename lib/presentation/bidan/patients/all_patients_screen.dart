@@ -210,9 +210,13 @@ class _PatientBidanCard extends StatelessWidget {
                     const Icon(Icons.calendar_today_rounded,
                         size: 12, color: AppColors.textSecond),
                     const SizedBox(width: 4),
-                    Text('HPHT: ${DateFormatter.toDisplay(patient.hpht)}',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textSecond)),
+                    Text(
+                      'HPHT: ${patient.hpht != null ? DateFormatter.toDisplay(patient.hpht!) : 'Belum diisi'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecond,
+                      ),
+                    ),
                   ]),
                 ])),
             Column(mainAxisAlignment: MainAxisAlignment.center, children: [

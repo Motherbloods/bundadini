@@ -198,9 +198,9 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           backgroundColor: AppColors.danger));
       return;
     }
-    if (_tanggalLahir == null || _hpht == null) {
+    if (_tanggalLahir == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Tanggal lahir dan HPHT wajib diisi'),
+          content: Text('Tanggal lahir wajib diisi'),
           backgroundColor: AppColors.danger));
       return;
     }
@@ -215,7 +215,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       tanggalLahir: _tanggalLahir!,
       alamat: _alamatCtrl.text.trim(),
       noHp: _noHpCtrl.text.trim(),
-      hpht: _hpht!,
+      hpht: _hpht,
       golonganDarah: _golDarah,
       fotoUrl: '',
       kaderId: auth.currentUser!.id,
@@ -381,12 +381,21 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
 
                     // HPHT
                     _buildDateField(
-                      'HPHT (Hari Pertama Haid Terakhir) *',
+                      'HPHT — Opsional',
                       _hpht,
                       () => _pickTanggal(isHpht: true),
                       sub: _hpht != null
-                          ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht!)} minggu'
+                          ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht)} minggu'
                           : null,
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Jika ibu tidak ingat HPHT, bisa diisi nanti melalui Edit Biodata.',
+                      style: TextStyle(
+                        color: AppColors.textSecond,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                     const SizedBox(height: 14),
 

@@ -48,7 +48,7 @@ class PatientModel {
   final DateTime tanggalLahir;
   final String alamat;
   final String noHp;
-  final DateTime hpht;
+  final DateTime? hpht;
   final GolonganDarah golonganDarah;
   final String fotoUrl;
   final String kaderId;
@@ -65,7 +65,7 @@ class PatientModel {
     required this.tanggalLahir,
     required this.alamat,
     required this.noHp,
-    required this.hpht,
+    this.hpht,
     required this.golonganDarah,
     required this.fotoUrl,
     required this.kaderId,
@@ -85,7 +85,7 @@ class PatientModel {
           (json['tanggalLahir'] as Timestamp?)?.toDate() ?? DateTime.now(),
       alamat: json['alamat'] as String? ?? '',
       noHp: json['noHp'] as String? ?? '',
-      hpht: (json['hpht'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      hpht: (json['hpht'] as Timestamp?)?.toDate(),
       golonganDarah:
           GolonganDarahExt.fromString(json['golonganDarah'] as String? ?? 'O'),
       fotoUrl: json['fotoUrl'] as String? ?? '',
@@ -105,7 +105,7 @@ class PatientModel {
         'tanggalLahir': Timestamp.fromDate(tanggalLahir),
         'alamat': alamat,
         'noHp': noHp,
-        'hpht': Timestamp.fromDate(hpht),
+        'hpht': hpht != null ? Timestamp.fromDate(hpht!) : null,
         'golonganDarah': golonganDarah.value,
         'fotoUrl': fotoUrl,
         'kaderId': kaderId,

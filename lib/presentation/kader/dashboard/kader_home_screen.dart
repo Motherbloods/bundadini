@@ -339,8 +339,14 @@ class _PatientCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'HPHT: ${DateFormatter.toDisplay(patient.hpht)}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        patient.hpht != null
+                            ? 'HPHT: ${DateFormatter.toDisplay(patient.hpht!)}'
+                            : 'HPHT: Belum diisi',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: patient.hpht != null
+                                  ? null
+                                  : AppColors.warning,
+                            ),
                       ),
                     ],
                   ),
