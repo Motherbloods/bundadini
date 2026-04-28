@@ -23,8 +23,9 @@ class KaderHomeScreen extends StatefulWidget {
 }
 
 class _KaderHomeScreenState extends State<KaderHomeScreen> {
-  final _searchCtrl = TextEditingController();
+  final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+
   String _query = '';
 
   @override
@@ -35,6 +36,7 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
 
   void _load() {
     final auth = context.read<AuthProvider>();
+
     if (auth.currentUser != null) {
       context.read<PatientProvider>().loadByKader(auth.currentUser!.id);
     }
@@ -58,7 +60,10 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
 
     if (ok && mounted) {
       await context.read<AuthProvider>().logout();
-      if (mounted) context.go(AppRoutes.login);
+
+      if (mounted) {
+        context.go(AppRoutes.login);
+      }
     }
   }
 
@@ -70,19 +75,23 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final patient = context.watch<PatientProvider>();
+
     final nama = auth.currentUser?.nama ?? 'Kader';
 
-    // Pisahkan pasien aktif dan selesai
     final listAktif = _query.isEmpty
         ? patient.patients
             .where((p) => p.status != StatusPasien.selesai)
             .toList()
         : patient.search(_query);
+
     final listSelesai = _query.isEmpty
         ? patient.patients
             .where((p) => p.status == StatusPasien.selesai)
             .toList()
         : [];
+
+    final jumlahAktif =
+        patient.patients.where((p) => p.status != StatusPasien.selesai).length;
 
     return GestureDetector(
       onTap: _hideKeyboard,
@@ -104,155 +113,160 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
             isOffline: connectivity.isOffline,
             child: child!,
           ),
-          child: RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () async => _load(),
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.primary,
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Halo, $nama 👋',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${patient.patients.where((p) => p.status != StatusPasien.selesai).length} pasien aktif',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _searchCtrl,
-                          focusNode: _searchFocusNode,
-                          onChanged: (v) => setState(() => _query = v),
-                          style: const TextStyle(fontSize: 16),
-                          decoration: InputDecoration(
-                            hintText: AppStrings.cariPasien,
-                            filled: true,
-                            fillColor: Colors.white,
-                            prefixIcon:
-                                const Icon(Icons.search, color: Colors.grey),
-                            suffixIcon: _query.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.clear,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      _searchCtrl.clear();
-                                      setState(() => _query = '');
-                                      _hideKeyboard();
-                                    },
-                                  )
-                                : null,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 14),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (patient.isLoading)
-                  const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                color: AppColors.primary,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Halo, $nama 👋',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  )
-                else if (listAktif.isEmpty && listSelesai.isEmpty)
-                  SliverFillRemaining(
-                    child: EmptyState(
-                      icon: Icons.pregnant_woman_rounded,
-                      title: _query.isEmpty
-                          ? AppStrings.pasienKosong
-                          : 'Tidak ada pasien "$_query"',
-                      subtitle: _query.isEmpty
-                          ? 'Ketuk + untuk mendaftarkan pasien baru'
-                          : null,
+                    const SizedBox(height: 4),
+                    Text(
+                      '$jumlahAktif pasien aktif',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                      ),
                     ),
-                  )
-                else ...[
-                  // List pasien aktif
-                  if (listAktif.isNotEmpty)
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => _PatientCard(patient: listAktif[i]),
-                          childCount: listAktif.length,
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _searchCtrl,
+                      focusNode: _searchFocusNode,
+                      onChanged: (v) => setState(() => _query = v),
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: AppStrings.cariPasien,
+                        filled: true,
+                        fillColor: Colors.white,
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.grey,
                         ),
-                      ),
-                    ),
-
-                  // Section pasien selesai
-                  if (listSelesai.isNotEmpty) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.child_care_rounded,
-                              color: AppColors.success,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Sudah Melahirkan (${listSelesai.length})',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        0,
-                        16,
-                        MediaQuery.of(context).padding.bottom + 16,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (ctx, i) => _PatientCard(
-                            patient: listSelesai[i],
-                            isSelesai: true,
-                          ),
-                          childCount: listSelesai.length,
+                        suffixIcon: _query.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  _searchCtrl.clear();
+                                  setState(() => _query = '');
+                                  _hideKeyboard();
+                                },
+                              )
+                            : null,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
                   ],
-                ],
-              ],
-            ),
+                ),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async => _load(),
+                  child: CustomScrollView(
+                    slivers: [
+                      if (patient.isLoading)
+                        const SliverFillRemaining(
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      else if (listAktif.isEmpty && listSelesai.isEmpty)
+                        SliverFillRemaining(
+                          child: EmptyState(
+                            icon: Icons.pregnant_woman_rounded,
+                            title: _query.isEmpty
+                                ? AppStrings.pasienKosong
+                                : 'Tidak ada pasien "$_query"',
+                            subtitle: _query.isEmpty
+                                ? 'Ketuk + untuk mendaftarkan pasien baru'
+                                : null,
+                          ),
+                        )
+                      else ...[
+                        if (listAktif.isNotEmpty)
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (ctx, i) => _PatientCard(patient: listAktif[i]),
+                                childCount: listAktif.length,
+                              ),
+                            ),
+                          ),
+                        if (listSelesai.isNotEmpty) ...[
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.child_care_rounded,
+                                    color: AppColors.success,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Sudah Melahirkan (${listSelesai.length})',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              16,
+                              0,
+                              16,
+                              MediaQuery.of(context).padding.bottom + 16,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (ctx, i) => _PatientCard(
+                                  patient: listSelesai[i],
+                                  isSelesai: true,
+                                ),
+                                childCount: listSelesai.length,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () =>
-              context.push(AppRoutes.addPatient).then((_) => _load()),
+          onPressed: () {
+            context.push(AppRoutes.addPatient).then((_) => _load());
+          },
           icon: const Icon(Icons.add),
           label: const Text(
             'Tambah Pasien',
@@ -276,7 +290,7 @@ class _PatientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Opacity(
-      opacity: isSelesai ? 0.6 : 1.0,
+      opacity: isSelesai ? 0.6 : 1,
       child: Card(
         margin: const EdgeInsets.only(bottom: 10),
         child: InkWell(
@@ -287,22 +301,23 @@ class _PatientCard extends StatelessWidget {
             if (!context.mounted) return;
 
             final auth = context.read<AuthProvider>();
-            final patientProvider = context.read<PatientProvider>();
+            final provider = context.read<PatientProvider>();
 
-            await patientProvider.loadByKader(auth.currentUser!.id);
+            await provider.loadByKader(auth.currentUser!.id);
           },
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: NetworkImageFallback(
-                      url: patient.fotoUrl,
-                      width: 56,
-                      height: 56,
-                      borderRadius: BorderRadius.circular(10),
-                    )),
+                  borderRadius: BorderRadius.circular(12),
+                  child: NetworkImageFallback(
+                    url: patient.fotoUrl,
+                    width: 56,
+                    height: 56,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -310,12 +325,12 @@ class _PatientCard extends StatelessWidget {
                     children: [
                       Text(
                         patient.nama,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
                       Text(
@@ -361,15 +376,4 @@ class _PatientCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _avatar() => Container(
-        width: 60,
-        height: 60,
-        color: AppColors.redPale,
-        child: const Icon(
-          Icons.person_rounded,
-          color: AppColors.primary,
-          size: 36,
-        ),
-      );
 }
