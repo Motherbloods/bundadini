@@ -11,6 +11,7 @@ import '../../../data/models/patient_model.dart';
 import '../../../domain/providers/examination_provider.dart';
 import '../../../domain/providers/patient_provider.dart';
 import '../../_widgets/section_header.dart';
+import '../../_widgets/photo_viewer.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   final String patientId;
@@ -91,7 +92,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
           IconButton(
             icon: const Icon(Icons.edit_rounded),
             tooltip: 'Edit Biodata',
-            onPressed: () => context.push('/kader/patients/${patient.id}/edit'),
+            onPressed: () async {
+              await context.push('/kader/patients/${patient.id}/edit');
+              if (mounted) _load();
+            },
           ),
         ],
         bottom: TabBar(
@@ -130,13 +134,50 @@ class _BiodataTab extends StatelessWidget {
         // Foto + nama
         Center(
           child: Column(children: [
-            NetworkImageFallback(
-              url: patient.fotoUrl,
-              width: 110,
-              height: 110,
-              borderRadius: BorderRadius.circular(20),
-              fallbackIcon: Icons.person_rounded,
+            GestureDetector(
+              onTap: () {
+                if (patient.fotoUrl.isNotEmpty) {
+                  PhotoViewer.show(
+                    context,
+                    imageUrl: patient.fotoUrl,
+                    nama: patient.nama,
+                    heroTag: 'patient-${patient.id}',
+                  );
+                }
+              },
+              child: Hero(
+                tag: 'patient-${patient.id}',
+                child: NetworkImageFallback(
+                  url: patient.fotoUrl,
+                  width: 110,
+                  height: 110,
+                  borderRadius: BorderRadius.circular(20),
+                  fallbackIcon: Icons.person_rounded,
+                ),
+              ),
             ),
+            if (patient.fotoUrl.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.zoom_in_rounded,
+                      size: 14,
+                      color: AppColors.textSecond,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Ketuk foto untuk perbesar',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecond,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             Text(patient.nama,
                 style: Theme.of(context)

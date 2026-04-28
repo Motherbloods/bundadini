@@ -11,10 +11,13 @@ class CloudinaryService {
     final uri =
         Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
 
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final publicId = '${patientId}_$timestamp';
+
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = _uploadPreset
       ..fields['folder'] = _folder
-      ..fields['public_id'] = patientId
+      ..fields['public_id'] = publicId
       ..files.add(await http.MultipartFile.fromPath('file', file.path));
 
     final response = await request.send();

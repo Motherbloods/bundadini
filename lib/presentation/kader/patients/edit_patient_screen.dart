@@ -66,10 +66,13 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
   }
 
   Future<void> _pickFoto(ImageSource source) async {
+    Navigator.pop(context);
+
     final picked = await ImagePicker()
         .pickImage(source: source, imageQuality: 75, maxWidth: 800);
-    if (picked != null) setState(() => _newFoto = File(picked.path));
-    if (mounted) Navigator.pop(context);
+    if (picked != null && mounted) {
+      setState(() => _newFoto = File(picked.path));
+    }
   }
 
   void _showFotoPicker() {
@@ -77,23 +80,34 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
       context: context,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SafeArea(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const SizedBox(height: 12),
-        ListTile(
+      builder: (sheetCtx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 12),
+          ListTile(
             leading:
                 const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
             title: const Text(AppStrings.ambilFoto,
                 style: TextStyle(fontSize: 16)),
-            onTap: () => _pickFoto(ImageSource.camera)),
-        ListTile(
+            onTap: () => _pickFoto(ImageSource.camera),
+          ),
+          ListTile(
             leading: const Icon(Icons.photo_library_rounded,
                 color: AppColors.primary),
             title: const Text(AppStrings.pilihGaleri,
                 style: TextStyle(fontSize: 16)),
-            onTap: () => _pickFoto(ImageSource.gallery)),
-        const SizedBox(height: 16),
-      ])),
+            onTap: () => _pickFoto(ImageSource.gallery),
+          ),
+          const SizedBox(height: 16),
+        ]),
+      ),
     );
   }
 
@@ -132,6 +146,9 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         .updatePatient(updated, fotoFile: _newFoto);
     if (!mounted) return;
     if (ok) {
+      await context.read<PatientProvider>().loadPatient(_patient!.id);
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Biodata berhasil diperbarui'),
           backgroundColor: AppColors.success));
@@ -172,23 +189,55 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                       onTap: _showFotoPicker,
                       child: Stack(children: [
                         ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: NetworkImageFallback(
-                              url: _patient!.fotoUrl,
-                              width: 110,
-                              height: 110,
-                              borderRadius: BorderRadius.circular(16),
-                            )),
+                          borderRadius: BorderRadius.circular(16),
+                          child: _newFoto != null
+                              ? Image.file(
+                                  _newFoto!,
+                                  width: 110,
+                                  height: 110,
+                                  fit: BoxFit.cover,
+                                )
+                              : NetworkImageFallback(
+                                  url: _patient!.fotoUrl,
+                                  width: 110,
+                                  height: 110,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                        ),
+                        if (_newFoto != null)
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: GestureDetector(
+                              onTap: () => setState(() => _newFoto = null),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
                         Positioned(
                             bottom: 6,
                             right: 6,
                             child: Container(
                                 padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                    color: AppColors.primary,
+                                decoration: BoxDecoration(
+                                    color: _newFoto != null
+                                        ? AppColors.success
+                                        : AppColors.primary,
                                     shape: BoxShape.circle),
-                                child: const Icon(Icons.edit,
-                                    color: Colors.white, size: 16))),
+                                child: Icon(
+                                    _newFoto != null ? Icons.check : Icons.edit,
+                                    color: Colors.white,
+                                    size: 16))),
                       ]),
                     ),
                   ),
