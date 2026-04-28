@@ -228,7 +228,12 @@ class _KaderHomeScreenState extends State<KaderHomeScreen> {
                       ),
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        0,
+                        16,
+                        MediaQuery.of(context).padding.bottom + 16,
+                      ),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (ctx, i) => _PatientCard(

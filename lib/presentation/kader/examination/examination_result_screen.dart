@@ -122,7 +122,12 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
         backgroundColor: AppColors.background,
         appBar: AppBar(title: const Text(AppStrings.hasilPemeriksaan)),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewPadding.bottom + 100,
+          ),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             // Header tanggal

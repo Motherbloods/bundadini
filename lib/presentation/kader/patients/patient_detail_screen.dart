@@ -104,7 +104,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen>
           ],
         ),
       ),
-      body: _BiodataTab(patient: patient),
+      body: SafeArea(
+        top: false,
+        child: _BiodataTab(patient: patient),
+      ),
     );
   }
 }
@@ -127,15 +130,13 @@ class _BiodataTab extends StatelessWidget {
         // Foto + nama
         Center(
           child: Column(children: [
-            ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: NetworkImageFallback(
-                  url: patient.fotoUrl,
-                  width: 110,
-                  height: 110,
-                  borderRadius: BorderRadius.circular(20),
-                  fallbackIcon: Icons.person_rounded,
-                )),
+            NetworkImageFallback(
+              url: patient.fotoUrl,
+              width: 110,
+              height: 110,
+              borderRadius: BorderRadius.circular(20),
+              fallbackIcon: Icons.person_rounded,
+            ),
             const SizedBox(height: 12),
             Text(patient.nama,
                 style: Theme.of(context)

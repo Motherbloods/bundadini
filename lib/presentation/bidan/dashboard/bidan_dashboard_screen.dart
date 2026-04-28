@@ -219,7 +219,12 @@ class _BidanDashboardScreenState extends State<BidanDashboardScreen> {
           onRefresh: _load,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              MediaQuery.of(context).viewPadding.bottom + 16,
+            ),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
