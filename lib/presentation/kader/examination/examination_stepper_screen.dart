@@ -39,13 +39,16 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
   final _tbCtrl = TextEditingController();
   final _lilaCtrl = TextEditingController();
   final _lpertCtrl = TextEditingController();
+  final _tfuCtrl = TextEditingController();
+
   double? _bmi;
   double? _kenaikanBb;
 
   // Step 3 — DJJ + keluhan
   final _djjCtrl = TextEditingController();
-  final _keluhanCtrl = TextEditingController();
   final _catatanCtrl = TextEditingController();
+  final _keluhanLainnyaCtrl = TextEditingController();
+  final List<String> _selectedKeluhan = [];
 
   // 3 form keys untuk 3 step
   final _keys = List.generate(3, (_) => GlobalKey<FormState>());
@@ -68,8 +71,9 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       _tbCtrl,
       _lilaCtrl,
       _lpertCtrl,
+      _tfuCtrl,
       _djjCtrl,
-      _keluhanCtrl,
+      _keluhanLainnyaCtrl,
       _catatanCtrl,
     ]) {
       c.dispose();
@@ -155,10 +159,14 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           lingkarPerut: _lpertCtrl.text.isNotEmpty
               ? double.tryParse(_lpertCtrl.text.trim().replaceAll(',', '.'))
               : null,
+          tfu: _tfuCtrl.text.isNotEmpty
+              ? double.tryParse(_tfuCtrl.text.trim().replaceAll(',', '.'))
+              : null,
           djj: int.parse(_djjCtrl.text.trim()),
-          keluhanIbu: _keluhanCtrl.text.trim().isEmpty
+          keluhanList: List.from(_selectedKeluhan),
+          keluhanLainnya: _keluhanLainnyaCtrl.text.trim().isEmpty
               ? null
-              : _keluhanCtrl.text.trim(),
+              : _keluhanLainnyaCtrl.text.trim(),
           catatanKader: _catatanCtrl.text.trim().isEmpty
               ? null
               : _catatanCtrl.text.trim(),
@@ -367,6 +375,7 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           tbCtrl: _tbCtrl,
           lilaCtrl: _lilaCtrl,
           lpertCtrl: _lpertCtrl,
+          tfuCtrl: _tfuCtrl,
           bmi: _bmi,
           kenaikanBb: _kenaikanBb,
         );
@@ -375,7 +384,14 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           key: const ValueKey(2),
           formKey: _keys[2],
           djjCtrl: _djjCtrl,
-          keluhanCtrl: _keluhanCtrl,
+          selectedKeluhan: _selectedKeluhan,
+          onKeluhanChanged: (list) => setState(() {
+            // ← GANTI
+            _selectedKeluhan
+              ..clear()
+              ..addAll(list);
+          }),
+          keluhanLainnyaCtrl: _keluhanLainnyaCtrl,
           catatanCtrl: _catatanCtrl,
         );
       default:
@@ -550,6 +566,7 @@ class _Step2TensiState extends State<_Step2Tensi> {
 class _Step3Antropometri extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController bbCtrl, tbCtrl, lilaCtrl, lpertCtrl;
+  final TextEditingController tfuCtrl;
   final double? bmi, kenaikanBb;
 
   const _Step3Antropometri({
@@ -559,6 +576,7 @@ class _Step3Antropometri extends StatefulWidget {
     required this.tbCtrl,
     required this.lilaCtrl,
     required this.lpertCtrl,
+    required this.tfuCtrl,
     this.bmi,
     this.kenaikanBb,
   });
@@ -644,6 +662,21 @@ class _Step3AntropometriState extends State<_Step3Antropometri> {
           label: AppStrings.lingkarPerutLabel,
           textInputAction: TextInputAction.done,
         ),
+        const SizedBox(height: 14),
+        DecimalTextField(
+          controller: widget.tfuCtrl,
+          label: AppStrings.tfuLabel,
+          textInputAction: TextInputAction.done,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'TFU normal: ±1 cm per minggu usia kehamilan (contoh: 28 minggu → ±28 cm)',
+          style: TextStyle(
+            color: AppColors.textSecond,
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
       ]),
     );
   }
@@ -685,14 +718,25 @@ class _InfoTile extends StatelessWidget {
 
 class _Step4Djj extends StatefulWidget {
   final GlobalKey<FormState> formKey;
-  final TextEditingController djjCtrl, keluhanCtrl, catatanCtrl;
+  final TextEditingController djjCtrl;
+
+  // ← GANTI dari keluhanCtrl:
+  final List<String> selectedKeluhan;
+  final ValueChanged<List<String>> onKeluhanChanged;
+  final TextEditingController keluhanLainnyaCtrl; // ← TAMBAH
+
+  final TextEditingController catatanCtrl;
+
   const _Step4Djj({
     super.key,
     required this.formKey,
     required this.djjCtrl,
-    required this.keluhanCtrl,
+    required this.selectedKeluhan,
+    required this.onKeluhanChanged,
+    required this.keluhanLainnyaCtrl,
     required this.catatanCtrl,
   });
+
   @override
   State<_Step4Djj> createState() => _Step4DjjState();
 }
@@ -700,6 +744,7 @@ class _Step4Djj extends StatefulWidget {
 class _Step4DjjState extends State<_Step4Djj> {
   String? _djjStatus;
   Color _djjColor = AppColors.success;
+  bool _adaLainnya = false;
 
   void _check() {
     final v = int.tryParse(widget.djjCtrl.text);
@@ -721,52 +766,215 @@ class _Step4DjjState extends State<_Step4Djj> {
     });
   }
 
+  void _toggleKeluhan(String keluhan) {
+    final list = List<String>.from(widget.selectedKeluhan);
+    if (list.contains(keluhan)) {
+      list.remove(keluhan);
+    } else {
+      list.add(keluhan);
+    }
+    widget.onKeluhanChanged(list);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
       key: widget.formKey,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const SectionHeader(title: AppStrings.step4Title),
-        const SizedBox(height: 16),
-        IntTextField(
-          controller: widget.djjCtrl,
-          label: AppStrings.djjLabel,
-          validator: Validators.djj,
-          onChanged: (_) => _check(),
-          textInputAction: TextInputAction.next,
-        ),
-        if (_djjStatus != null) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: _djjColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _djjColor.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              _djjStatus!,
-              style: TextStyle(
-                color: _djjColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionHeader(title: AppStrings.step4Title),
+          const SizedBox(height: 16),
+          IntTextField(
+            controller: widget.djjCtrl,
+            label: AppStrings.djjLabel,
+            validator: Validators.djj,
+            onChanged: (_) => _check(),
+            textInputAction: TextInputAction.next,
+          ),
+          if (_djjStatus != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _djjColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _djjColor.withValues(alpha: 0.3)),
               ),
+              child: Text(_djjStatus!,
+                  style: TextStyle(
+                      color: _djjColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15)),
+            ),
+          ],
+          const SizedBox(height: 20),
+          const SectionHeader(title: 'Keluhan Ibu'),
+          const SizedBox(height: 4),
+          const Text(
+            'Pilih semua keluhan yang dirasakan ibu (boleh lebih dari satu)',
+            style: TextStyle(color: AppColors.textSecond, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.divider),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                ...AppStrings.daftarKeluhan.asMap().entries.map((entry) {
+                  final keluhan = entry.value;
+                  final isLast =
+                      entry.key == AppStrings.daftarKeluhan.length - 1;
+                  final selected = widget.selectedKeluhan.contains(keluhan);
+                  return Column(children: [
+                    InkWell(
+                      onTap: () => setState(() => _toggleKeluhan(keluhan)),
+                      borderRadius: BorderRadius.vertical(
+                        top: entry.key == 0
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                        bottom: isLast && !_adaLainnya
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        child: Row(children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              border: Border.all(
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.divider,
+                                  width: 2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: selected
+                                ? const Icon(Icons.check,
+                                    color: Colors.white, size: 14)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(keluhan,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              )),
+                        ]),
+                      ),
+                    ),
+                    if (!isLast || _adaLainnya)
+                      const Divider(height: 1, indent: 48),
+                  ]);
+                }),
+                InkWell(
+                  onTap: () => setState(() {
+                    _adaLainnya = !_adaLainnya;
+                    if (!_adaLainnya) {
+                      widget.keluhanLainnyaCtrl.clear();
+                    }
+                  }),
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    child: Row(children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: _adaLainnya
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          border: Border.all(
+                              color: _adaLainnya
+                                  ? AppColors.primary
+                                  : AppColors.divider,
+                              width: 2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: _adaLainnya
+                            ? const Icon(Icons.check,
+                                color: Colors.white, size: 14)
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('Lainnya...',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: _adaLainnya
+                                ? AppColors.primary
+                                : AppColors.textSecond,
+                            fontStyle: FontStyle.italic,
+                          )),
+                    ]),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (_adaLainnya) ...[
+            const SizedBox(height: 10),
+            CustomTextField(
+              controller: widget.keluhanLainnyaCtrl,
+              label: 'Keluhan lainnya',
+              hint: 'Tuliskan keluhan lain yang tidak ada di daftar...',
+              maxLines: 2,
+            ),
+          ],
+          if (widget.selectedKeluhan.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warningLight,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${widget.selectedKeluhan.length} keluhan dipilih:',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.warning),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.selectedKeluhan.join(' · '),
+                    style:
+                        const TextStyle(fontSize: 12, color: AppColors.warning),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          CustomTextField(
+            controller: widget.catatanCtrl,
+            label: AppStrings.catatanKaderLabel,
+            maxLines: 3,
+          ),
         ],
-        const SizedBox(height: 14),
-        CustomTextField(
-          controller: widget.keluhanCtrl,
-          label: AppStrings.keluhanLabel,
-          maxLines: 3,
-        ),
-        const SizedBox(height: 14),
-        CustomTextField(
-          controller: widget.catatanCtrl,
-          label: AppStrings.catatanKaderLabel,
-          maxLines: 3,
-        ),
-      ]),
+      ),
     );
   }
 }

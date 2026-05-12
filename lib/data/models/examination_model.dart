@@ -47,7 +47,7 @@ class ExaminationModel {
   final String kaderNama;
   final String bidanId;
   final DateTime tanggal;
-  final int usiaKehamilan; // dalam minggu
+  final int usiaKehamilan;
 
   // Tensi
   final int sistolik;
@@ -65,6 +65,9 @@ class ExaminationModel {
   final int djj;
   final String? keluhanIbu;
   final String? catatanKader;
+  final double? tfu;
+  final List<String> keluhanList;
+  final String? keluhanLainnya;
 
   // Output Rule Engine
   final String statusIbu;
@@ -93,6 +96,9 @@ class ExaminationModel {
     required this.djj,
     this.keluhanIbu,
     this.catatanKader,
+    this.tfu,
+    required this.keluhanList,
+    this.keluhanLainnya,
     required this.statusIbu,
     required this.statusJanin,
     required this.rekomendasi,
@@ -123,6 +129,9 @@ class ExaminationModel {
       djj: (json['djj'] as num?)?.toInt() ?? 0,
       keluhanIbu: json['keluhanIbu'] as String?,
       catatanKader: json['catatanKader'] as String?,
+      tfu: (json['tfu'] as num?)?.toDouble(),
+      keluhanList: List<String>.from(json['keluhanList'] as List? ?? []),
+      keluhanLainnya: json['keluhanLainnya'] as String?,
       statusIbu: json['statusIbu'] as String? ?? ExaminationStatus.normal,
       statusJanin: json['statusJanin'] as String? ?? JaninStatus.normal,
       rekomendasi: List<String>.from(json['rekomendasi'] as List? ?? []),
@@ -150,6 +159,9 @@ class ExaminationModel {
         'djj': djj,
         'keluhanIbu': keluhanIbu,
         'catatanKader': catatanKader,
+        'tfu': tfu,
+        'keluhanList': keluhanList,
+        'keluhanLainnya': keluhanLainnya,
         'statusIbu': statusIbu,
         'statusJanin': statusJanin,
         'rekomendasi': rekomendasi,
@@ -176,6 +188,9 @@ class ExaminationModel {
     int? djj,
     String? keluhanIbu,
     String? catatanKader,
+    double? tfu,
+    List<String>? keluhanList,
+    String? keluhanLainnya,
     String? statusIbu,
     String? statusJanin,
     List<String>? rekomendasi,
@@ -201,6 +216,9 @@ class ExaminationModel {
       djj: djj ?? this.djj,
       keluhanIbu: keluhanIbu ?? this.keluhanIbu,
       catatanKader: catatanKader ?? this.catatanKader,
+      tfu: tfu ?? this.tfu,
+      keluhanList: keluhanList ?? this.keluhanList,
+      keluhanLainnya: keluhanLainnya ?? this.keluhanLainnya,
       statusIbu: statusIbu ?? this.statusIbu,
       statusJanin: statusJanin ?? this.statusJanin,
       rekomendasi: rekomendasi ?? this.rekomendasi,

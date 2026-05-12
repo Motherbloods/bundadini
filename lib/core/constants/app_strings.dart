@@ -71,6 +71,7 @@ class AppStrings {
   static const String bmiLabel = 'BMI (auto-hitung)';
   static const String kenaikanBbLabel =
       'Kenaikan BB dari pemeriksaan sebelumnya';
+  static const String tfuLabel = 'TFU / Tinggi Fundus Uteri (cm) — Opsional';
 
   // Status Pemeriksaan
   static const String statusNormal = 'Normal';
@@ -159,4 +160,21 @@ class AppStrings {
   static const String tanggal = 'Tanggal';
   static const String minggu = 'minggu';
   static const String kader = 'Kader';
+
+  static const List<String> daftarKeluhan = [
+    'Pusing / sakit kepala',
+    'Mual / muntah',
+    'Nyeri perut',
+    'Sesak napas',
+    'Bengkak pada kaki',
+    'Bengkak pada tangan/wajah',
+    'Perdarahan',
+    'Gerak janin berkurang',
+    'Nyeri punggung',
+    'Susah tidur',
+    'Lemas / mudah lelah',
+    'Demam',
+    'Gatal-gatal',
+    'Keputihan abnormal',
+  ];
 }

@@ -186,6 +186,10 @@ class _ExaminationResultScreenState extends State<ExaminationResultScreen> {
                   exam.bmi.toStringAsFixed(1),
                   sub: RuleEngine.kategoriBmi(exam.bmi),
                 ),
+                _Row(
+                  "TFU",
+                  exam.tfu == null ? '-' : '${exam.tfu!.toStringAsFixed(1)} cm',
+                ),
                 if (exam.lingkarPerut != null)
                   _Row('Lingkar Perut',
                       '${exam.lingkarPerut!.toStringAsFixed(1)} cm'),
@@ -387,7 +391,7 @@ class _KesimpulanCard extends StatelessWidget {
                       status: exam.statusJanin, isJanin: true, large: true),
                 ])),
           ]),
-          if (exam.keluhanIbu != null && exam.keluhanIbu!.isNotEmpty) ...[
+          if (exam.keluhanList.isNotEmpty || exam.keluhanLainnya != null) ...[
             const SizedBox(height: 14),
             const Divider(height: 1),
             const SizedBox(height: 12),
@@ -396,8 +400,45 @@ class _KesimpulanCard extends StatelessWidget {
                     color: AppColors.textSecond,
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(exam.keluhanIbu!, style: const TextStyle(fontSize: 15)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                ...exam.keluhanList.map((k) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.warningLight,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(k,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.w500)),
+                    )),
+                if (exam.keluhanLainnya != null &&
+                    exam.keluhanLainnya!.isNotEmpty)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningLight,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.4)),
+                    ),
+                    child: Text('Lainnya: ${exam.keluhanLainnya}',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.warning,
+                            fontStyle: FontStyle.italic)),
+                  ),
+              ],
+            ),
           ],
           if (exam.catatanKader != null && exam.catatanKader!.isNotEmpty) ...[
             const SizedBox(height: 10),

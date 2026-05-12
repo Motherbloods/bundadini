@@ -347,7 +347,19 @@ class PdfService {
       ],
       ['BMI', exam.bmi.toStringAsFixed(1), RuleEngine.kategoriBmi(exam.bmi)],
       ['DJJ', '${exam.djj} bpm', JaninStatus.label(exam.statusJanin)],
-      ['Keluhan Ibu', exam.keluhanIbu ?? '-', ''],
+      [
+        'Keluhan Ibu',
+        exam.keluhanList.isNotEmpty
+            ? exam.keluhanList.join(', ') +
+                (exam.keluhanLainnya != null ? ', ${exam.keluhanLainnya}' : '')
+            : '-',
+        ''
+      ],
+      [
+        'TFU (cm)',
+        exam.tfu != null ? '${exam.tfu!.toStringAsFixed(1)} cm' : '-',
+        ''
+      ],
       ['Catatan Kader', exam.catatanKader ?? '-', ''],
     ];
 
