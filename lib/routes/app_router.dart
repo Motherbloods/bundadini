@@ -134,6 +134,12 @@ class AppRouter {
             patientId: state.pathParameters['patientId']!,
           ),
         ),
+        GoRoute(
+          path: '/bidan/patients/:patientId/history',
+          builder: (_, state) => ExaminationHistoryScreen(
+            patientId: state.pathParameters['patientId']!,
+          ),
+        ),
       ],
     );
   }
