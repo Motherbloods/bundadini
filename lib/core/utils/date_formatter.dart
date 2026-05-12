@@ -32,7 +32,7 @@ class DateFormatter {
     return '$years tahun';
   }
 
-  /// Hitung taksiran persalinan dari HPHT (Naegele's rule)
+  /// Hitung HPL (Hari Perkiraan Lahir) dari HPHT (Naegele's rule)
   static DateTime? taksiran(DateTime? hpht) {
     if (hpht == null) return null;
     return hpht.add(const Duration(days: 280));
@@ -43,6 +43,21 @@ class DateFormatter {
     if (hpht == null) return null;
     final diff = DateTime.now().difference(hpht).inDays;
     return (diff / 7).floor();
+  }
+
+  static String usiaKehamilanFormatted(DateTime? hpht) {
+    if (hpht == null) return '-';
+    final diff = DateTime.now().difference(hpht).inDays;
+    final minggu = (diff / 7).floor();
+    final bulan = (minggu / 4.33).floor();
+    if (bulan <= 0) return '$minggu minggu';
+    return '$minggu minggu ($bulan bulan)';
+  }
+
+  static String hplFormatted(DateTime? hpht) {
+    if (hpht == null) return '-';
+    final hpl = hpht.add(const Duration(days: 280));
+    return DateFormat('dd MMM yyyy (EEEE)', 'id_ID').format(hpl);
   }
 
   static DateTime? parseFlexible(String value) {

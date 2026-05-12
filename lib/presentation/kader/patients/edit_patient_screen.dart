@@ -302,13 +302,14 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                     _hpht,
                     () => _pickTanggal(isHpht: true),
                     sub: _hpht != null
-                        ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht)} minggu'
+                        ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanFormatted(_hpht)}\n'
+                            'HPL: ${DateFormatter.hplFormatted(_hpht)}'
                         : null,
                   ),
                   if (_hpht == null) ...[
                     const SizedBox(height: 6),
                     const Text(
-                      'Isi HPHT agar taksiran persalinan dan usia kehamilan dapat dihitung.',
+                      'Isi HPHT agar HPL (Hari Perkiraan Lahir) dan usia kehamilan dapat dihitung.',
                       style: TextStyle(
                         color: AppColors.textSecond,
                         fontSize: 13,

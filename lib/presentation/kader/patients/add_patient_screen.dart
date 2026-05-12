@@ -385,7 +385,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                       _hpht,
                       () => _pickTanggal(isHpht: true),
                       sub: _hpht != null
-                          ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanMinggu(_hpht)} minggu'
+                          ? 'Usia kehamilan: ${DateFormatter.usiaKehamilanFormatted(_hpht)}\n'
+                              'HPL: ${DateFormatter.hplFormatted(_hpht)}'
                           : null,
                     ),
                     const SizedBox(height: 6),

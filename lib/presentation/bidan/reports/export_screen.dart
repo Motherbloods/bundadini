@@ -284,7 +284,7 @@ class _ExportScreenState extends State<ExportScreen> {
                       columns: [
                         'Data pasien lengkap',
                         'Tabel rekap semua pemeriksaan',
-                        'Taksiran Persalinan (TP)',
+                        'HPL (Hari Perkiraan Lahir) (TP)',
                         'Kesimpulan kondisi ibu & janin',
                         'Rekomendasi',
                         'Ruang tanda tangan bidan',

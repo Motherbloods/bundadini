@@ -224,16 +224,15 @@ class _BiodataTab extends StatelessWidget {
                 : 'Belum diisi',
           ),
           _InfoItem(
-            'Taksiran Persalinan',
+            'Usia Kehamilan',
             patient.hpht != null
-                ? DateFormatter.toDisplay(
-                    DateFormatter.taksiran(patient.hpht!)!)
+                ? DateFormatter.usiaKehamilanFormatted(patient.hpht!)
                 : 'Tersedia setelah HPHT diisi',
           ),
           _InfoItem(
-            'Usia Kehamilan Saat Ini',
+            'HPL (Hari Perkiraan Lahir)',
             patient.hpht != null
-                ? '${DateFormatter.usiaKehamilanMinggu(patient.hpht!)} minggu'
+                ? DateFormatter.hplFormatted(patient.hpht!)
                 : 'Tersedia setelah HPHT diisi',
           ),
         ]),

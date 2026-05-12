@@ -194,7 +194,7 @@ class PdfService {
     final font = await PdfGoogleFonts.nunitoRegular();
     final fontBold = await PdfGoogleFonts.nunitoBold();
 
-    // Hitung Taksiran Persalinan dari HPHT (data Firestore, bukan hardcode)
+    // Hitung HPL (Hari Perkiraan Lahir) dari HPHT (data Firestore, bukan hardcode)
     print('HPHT masuk ke PDF: $patientHpht');
     final tpStr = _hitungTpFromString(patientHpht);
     print('TP hasil hitung di PDF: $tpStr');
@@ -219,7 +219,7 @@ class PdfService {
           patientAlamat,
           patientNoHp,
           patientHpht,
-          tpStr, // Taksiran Persalinan dihitung dari HPHT Firestore
+          tpStr, // HPL (Hari Perkiraan Lahir) dihitung dari HPHT Firestore
           font,
           fontBold,
         ),
@@ -298,8 +298,8 @@ class PdfService {
         _infoRow('Golongan Darah', golDarah, font, fontBold),
         _infoRow('Nomor HP', noHp, font, fontBold),
         _infoRow('HPHT', hpht, font, fontBold),
-        // Taksiran Persalinan — tidak hardcode, dihitung dari HPHT Firestore
-        _infoRow('Taksiran Persalinan', tp, font, fontBold),
+        // HPL (Hari Perkiraan Lahir) — tidak hardcode, dihitung dari HPHT Firestore
+        _infoRow('HPL (Hari Perkiraan Lahir)', tp, font, fontBold),
         _infoRow('Alamat', alamat, font, fontBold),
       ]),
     );
@@ -499,7 +499,7 @@ class PdfService {
   static String _fmt(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
-  /// Hitung Taksiran Persalinan (Naegele) dari objek DateTime HPHT.
+  /// Hitung HPL (Hari Perkiraan Lahir) (Naegele) dari objek DateTime HPHT.
   /// TP = HPHT + 7 hari, - 3 bulan, + 1 tahun.
   static String _hitungTp(DateTime hpht) {
     try {

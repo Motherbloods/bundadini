@@ -264,24 +264,33 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
 
           // Info usia kehamilan (dari HPHT)
           Builder(builder: (_) {
-            final usia = DateFormatter.usiaKehamilanMinggu(patient?.hpht);
-            if (usia == null) return const SizedBox.shrink();
+            final usia = DateFormatter.usiaKehamilanFormatted(patient?.hpht);
+
+            if (usia == '-') return const SizedBox.shrink();
+
             return Container(
               color: AppColors.redPale,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(children: [
-                const Icon(Icons.pregnant_woman_rounded,
-                    color: AppColors.primary, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Usia kehamilan: $usia minggu',
-                  style: const TextStyle(
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.pregnant_woman_rounded,
                     color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    size: 18,
                   ),
-                ),
-              ]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Usia kehamilan: $usia',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           }),
           // Form konten
