@@ -75,4 +75,12 @@ class DateFormatter {
 
     return null;
   }
+
+  static String? tanggalLahir(DateTime? value) {
+    if (value == null) return 'Tanggal lahir wajib diisi';
+    if (value.isAfter(DateTime.now())) {
+      return 'Tanggal lahir tidak valid';
+    }
+    return null;
+  }
 }

@@ -192,15 +192,19 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
 
   Future<void> _simpan() async {
     if (!_formKey.currentState!.validate()) return;
+    final tanggalErr = DateFormatter.tanggalLahir(_tanggalLahir);
+    if (tanggalErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tanggalErr),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
     if (_fotoFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(AppStrings.fotoWajib),
-          backgroundColor: AppColors.danger));
-      return;
-    }
-    if (_tanggalLahir == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Tanggal lahir wajib diisi'),
           backgroundColor: AppColors.danger));
       return;
     }
