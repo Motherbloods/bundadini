@@ -1,4 +1,5 @@
 import 'package:bundadini/data/repositories/auth_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -440,16 +441,68 @@ class _KesimpulanCard extends StatelessWidget {
               ],
             ),
           ],
-          if (exam.catatanKader != null && exam.catatanKader!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text('Catatan Kader',
-                style: TextStyle(
-                    color: AppColors.textSecond,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(exam.catatanKader!, style: const TextStyle(fontSize: 15)),
-          ],
+          Consumer<AuthProvider>(
+            builder: (_, auth, __) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+
+                  // Label berbeda berdasarkan role
+                  Row(children: [
+                    const Icon(Icons.medical_information_rounded,
+                        color: AppColors.info, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      auth.isBidan
+                          ? 'Catatan Bidan'
+                          : 'Catatan Bidan Pendamping',
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.info),
+                    ),
+                  ]),
+                  const SizedBox(height: 10),
+
+                  // Bidan: tampilkan form editable
+                  if (auth.isBidan)
+                    _CatatanBidanEditor(exam: exam)
+                  // Kader: tampilkan read-only
+                  else if (exam.catatanBidan != null &&
+                      exam.catatanBidan!.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          color: AppColors.infoLight,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppColors.info.withValues(alpha: 0.3))),
+                      child: Text(exam.catatanBidan!,
+                          style: const TextStyle(fontSize: 15)),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.divider)),
+                      child: const Text(
+                          'Menunggu catatan dari bidan pendamping...',
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecond,
+                              fontStyle: FontStyle.italic)),
+                    ),
+                ],
+              );
+            },
+          ),
           const SizedBox(height: 14),
           const Divider(height: 1),
           const SizedBox(height: 12),
@@ -487,6 +540,192 @@ class _KesimpulanCard extends StatelessWidget {
           ),
         ]),
       ),
+    );
+  }
+}
+
+class _CatatanBidanEditor extends StatefulWidget {
+  final ExaminationModel exam;
+  const _CatatanBidanEditor({required this.exam});
+  @override
+  State<_CatatanBidanEditor> createState() => _CatatanBidanEditorState();
+}
+
+class _CatatanBidanEditorState extends State<_CatatanBidanEditor> {
+  late TextEditingController _ctrl;
+  bool _saving = false;
+  bool _saved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefill: kalau sudah ada catatan sebelumnya, tampilkan
+    // Kalau belum, generate template otomatis dari hasil rule engine
+    _ctrl = TextEditingController(
+      text: widget.exam.catatanBidan?.isNotEmpty == true
+          ? widget.exam.catatanBidan!
+          : _generateTemplate(),
+    );
+  }
+
+  /// Generate template catatan berdasarkan hasil pemeriksaan
+  String _generateTemplate() {
+    final e = widget.exam;
+    final lines = <String>[];
+    final tanggal = DateFormatter.toDisplay(e.tanggal);
+
+    lines.add('Hasil pemeriksaan tanggal $tanggal:');
+
+    // Tensi
+    if (e.sistolik >= 140 || e.diastolik >= 90) {
+      lines.add('- Tekanan darah tinggi (${e.sistolik}/${e.diastolik} mmHg). '
+          'Perlu pemantauan ketat dan konsultasi dokter.');
+    } else if (e.sistolik < 90 || e.diastolik < 60) {
+      lines.add('- Tekanan darah rendah (${e.sistolik}/${e.diastolik} mmHg). '
+          'Anjurkan istirahat cukup dan konsumsi makanan bergizi.');
+    } else {
+      lines.add('- Tekanan darah normal (${e.sistolik}/${e.diastolik} mmHg).');
+    }
+
+    // LILA / KEK
+    if (e.lingkarLengan < 23.5) {
+      lines.add('- LILA ${e.lingkarLengan} cm (KEK). '
+          'Perlu konsultasi ahli gizi dan peningkatan asupan kalori.');
+    }
+
+    // DJJ
+    if (e.statusJanin == 'djj_rendah') {
+      lines.add(
+          '- DJJ rendah (${e.djj} bpm). Segera rujuk ke fasilitas kesehatan.');
+    } else if (e.statusJanin == 'djj_tinggi') {
+      lines.add(
+          '- DJJ tinggi (${e.djj} bpm). Anjurkan ibu istirahat dan segera periksakan.');
+    }
+
+    // Status umum
+    if (e.statusIbu == 'risiko_tinggi') {
+      lines.add('- Status ibu: RISIKO TINGGI. Diperlukan penanganan segera.');
+    } else if (e.statusIbu == 'perlu_perhatian') {
+      lines.add('- Status ibu: Perlu Perhatian. Pantau kondisi lebih sering.');
+    } else {
+      lines.add('- Kondisi ibu dan janin dalam batas normal.');
+      lines.add('- Anjurkan tetap rutin kontrol kehamilan.');
+    }
+
+    return lines.join('\n');
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _simpan() async {
+    final teks = _ctrl.text.trim();
+    if (teks.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _saved = false;
+    });
+    try {
+      await FirebaseFirestore.instance
+          .collection('examinations')
+          .doc(widget.exam.id)
+          .update({'catatanBidan': teks});
+      setState(() {
+        _saving = false;
+        _saved = true;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Catatan bidan berhasil disimpan'),
+            backgroundColor: AppColors.success));
+      }
+    } catch (_) {
+      setState(() => _saving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Gagal menyimpan catatan'),
+            backgroundColor: AppColors.danger));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Info template
+        if (widget.exam.catatanBidan == null ||
+            widget.exam.catatanBidan!.isEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+                color: AppColors.infoLight,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.info.withOpacity(0.3))),
+            child: const Row(children: [
+              Icon(Icons.auto_awesome_rounded, color: AppColors.info, size: 16),
+              SizedBox(width: 8),
+              Expanded(
+                  child: Text(
+                      'Template catatan sudah dibuat otomatis '
+                      'berdasarkan hasil pemeriksaan. '
+                      'Anda bisa mengedit sesuai kebutuhan.',
+                      style: TextStyle(color: AppColors.info, fontSize: 12))),
+            ]),
+          ),
+
+        // Text editor
+        TextField(
+          controller: _ctrl,
+          maxLines: 6,
+          onChanged: (_) => setState(() => _saved = false),
+          style: const TextStyle(fontSize: 14, height: 1.5),
+          decoration: InputDecoration(
+            hintText: 'Catatan atau rekomendasi bidan...',
+            filled: true,
+            fillColor: AppColors.surface,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.info, width: 2)),
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Tombol simpan
+        SizedBox(
+          height: 48,
+          child: ElevatedButton.icon(
+            icon: _saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : Icon(_saved ? Icons.check_rounded : Icons.save_rounded,
+                    size: 18),
+            label: Text(_saving
+                ? 'Menyimpan...'
+                : _saved
+                    ? 'Tersimpan ✓'
+                    : 'Simpan Catatan'),
+            onPressed: (_saving || _saved) ? null : _simpan,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _saved ? AppColors.success : AppColors.info,
+                disabledBackgroundColor: _saved ? AppColors.success : null),
+          ),
+        ),
+      ],
     );
   }
 }

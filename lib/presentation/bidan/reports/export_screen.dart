@@ -261,7 +261,7 @@ class _ExportScreenState extends State<ExportScreen> {
                         'Status Janin',
                         'Rekomendasi',
                         'Keluhan',
-                        'Catatan Kader',
+                        'Catatan Bidan',
                       ],
                     ),
                     const SizedBox(height: 12),

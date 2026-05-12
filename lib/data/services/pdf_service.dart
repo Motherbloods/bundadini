@@ -360,7 +360,13 @@ class PdfService {
         exam.tfu != null ? '${exam.tfu!.toStringAsFixed(1)} cm' : '-',
         ''
       ],
-      ['Catatan Kader', exam.catatanKader ?? '-', ''],
+      [
+        'Catatan Bidan',
+        exam.catatanBidan != null && exam.catatanBidan!.isNotEmpty
+            ? exam.catatanBidan!
+            : '(Belum ada catatan bidan)',
+        ''
+      ],
     ];
 
     return pw.TableHelper.fromTextArray(

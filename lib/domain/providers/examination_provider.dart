@@ -50,7 +50,6 @@ class ExaminationProvider extends ChangeNotifier {
     double? tfu,
     required List<String> keluhanList,
     String? keluhanLainnya,
-    String? catatanKader,
     required List<RuleModel> rules,
   }) async {
     _setLoading(true);
@@ -96,7 +95,7 @@ class ExaminationProvider extends ChangeNotifier {
         djj: djj,
         keluhanList: keluhanList,
         keluhanLainnya: keluhanLainnya,
-        catatanKader: catatanKader,
+        catatanBidan: null,
         statusIbu: result.statusIbu,
         statusJanin: result.statusJanin,
         rekomendasi: result.rekomendasi,

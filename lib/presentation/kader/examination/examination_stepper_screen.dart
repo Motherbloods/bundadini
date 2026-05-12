@@ -46,7 +46,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
 
   // Step 3 — DJJ + keluhan
   final _djjCtrl = TextEditingController();
-  final _catatanCtrl = TextEditingController();
   final _keluhanLainnyaCtrl = TextEditingController();
   final List<String> _selectedKeluhan = [];
 
@@ -74,7 +73,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
       _tfuCtrl,
       _djjCtrl,
       _keluhanLainnyaCtrl,
-      _catatanCtrl,
     ]) {
       c.dispose();
     }
@@ -167,9 +165,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
           keluhanLainnya: _keluhanLainnyaCtrl.text.trim().isEmpty
               ? null
               : _keluhanLainnyaCtrl.text.trim(),
-          catatanKader: _catatanCtrl.text.trim().isEmpty
-              ? null
-              : _catatanCtrl.text.trim(),
           rules: rulesProvider.rules,
         );
 
@@ -392,7 +387,6 @@ class _ExaminationStepperScreenState extends State<ExaminationStepperScreen> {
               ..addAll(list);
           }),
           keluhanLainnyaCtrl: _keluhanLainnyaCtrl,
-          catatanCtrl: _catatanCtrl,
         );
       default:
         return const SizedBox.shrink();
@@ -725,8 +719,6 @@ class _Step4Djj extends StatefulWidget {
   final ValueChanged<List<String>> onKeluhanChanged;
   final TextEditingController keluhanLainnyaCtrl; // ← TAMBAH
 
-  final TextEditingController catatanCtrl;
-
   const _Step4Djj({
     super.key,
     required this.formKey,
@@ -734,7 +726,6 @@ class _Step4Djj extends StatefulWidget {
     required this.selectedKeluhan,
     required this.onKeluhanChanged,
     required this.keluhanLainnyaCtrl,
-    required this.catatanCtrl,
   });
 
   @override
@@ -967,12 +958,6 @@ class _Step4DjjState extends State<_Step4Djj> {
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          CustomTextField(
-            controller: widget.catatanCtrl,
-            label: AppStrings.catatanKaderLabel,
-            maxLines: 3,
-          ),
         ],
       ),
     );

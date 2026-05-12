@@ -64,7 +64,7 @@ class ExaminationModel {
   // DJJ & Keluhan
   final int djj;
   final String? keluhanIbu;
-  final String? catatanKader;
+  final String? catatanBidan;
   final double? tfu;
   final List<String> keluhanList;
   final String? keluhanLainnya;
@@ -95,7 +95,7 @@ class ExaminationModel {
     required this.kenaikanBb,
     required this.djj,
     this.keluhanIbu,
-    this.catatanKader,
+    this.catatanBidan,
     this.tfu,
     required this.keluhanList,
     this.keluhanLainnya,
@@ -128,7 +128,7 @@ class ExaminationModel {
       kenaikanBb: (json['kenaikanBb'] as num?)?.toDouble() ?? 0.0,
       djj: (json['djj'] as num?)?.toInt() ?? 0,
       keluhanIbu: json['keluhanIbu'] as String?,
-      catatanKader: json['catatanKader'] as String?,
+      catatanBidan: json['catatanBidan'] as String?,
       tfu: (json['tfu'] as num?)?.toDouble(),
       keluhanList: List<String>.from(json['keluhanList'] as List? ?? []),
       keluhanLainnya: json['keluhanLainnya'] as String?,
@@ -158,7 +158,7 @@ class ExaminationModel {
         'kenaikanBb': kenaikanBb,
         'djj': djj,
         'keluhanIbu': keluhanIbu,
-        'catatanKader': catatanKader,
+        'catatanBidan': catatanBidan,
         'tfu': tfu,
         'keluhanList': keluhanList,
         'keluhanLainnya': keluhanLainnya,
@@ -187,7 +187,7 @@ class ExaminationModel {
     double? kenaikanBb,
     int? djj,
     String? keluhanIbu,
-    String? catatanKader,
+    String? catatanBidan,
     double? tfu,
     List<String>? keluhanList,
     String? keluhanLainnya,
@@ -215,7 +215,7 @@ class ExaminationModel {
       kenaikanBb: kenaikanBb ?? this.kenaikanBb,
       djj: djj ?? this.djj,
       keluhanIbu: keluhanIbu ?? this.keluhanIbu,
-      catatanKader: catatanKader ?? this.catatanKader,
+      catatanBidan: catatanBidan ?? this.catatanBidan,
       tfu: tfu ?? this.tfu,
       keluhanList: keluhanList ?? this.keluhanList,
       keluhanLainnya: keluhanLainnya ?? this.keluhanLainnya,

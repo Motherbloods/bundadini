@@ -42,7 +42,7 @@ class ExcelService {
       'Status Janin',
       'Rekomendasi',
       'Keluhan Ibu',
-      'Catatan Kader',
+      'Catatan Bidan',
     ];
 
     final headerStyle = CellStyle(
@@ -126,7 +126,7 @@ class ExcelService {
         TextCellValue(JaninStatus.label(e.statusJanin)),
         TextCellValue(e.rekomendasi.join('; ')),
         TextCellValue(e.keluhanIbu ?? '-'),
-        TextCellValue(e.catatanKader ?? '-'),
+        TextCellValue(e.catatanBidan ?? '-'),
       ];
 
       for (var j = 0; j < values.length; j++) {
